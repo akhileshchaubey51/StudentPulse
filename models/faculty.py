@@ -14,7 +14,7 @@ class FacultyFeedback(db.Model):
     response_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    faculty = db.relationship('FacultyProfile', backref='sent_feedbacks')
+    faculty = db.relationship('FacultyProfile', overlaps="faculty_profile,feedbacks_given")
 
 
 class MentorshipTarget(db.Model):
@@ -30,7 +30,7 @@ class MentorshipTarget(db.Model):
     status = db.Column(db.String(20), default='Pending')  # Pending, In Progress, Completed, Overdue
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    faculty = db.relationship('FacultyProfile', backref='assigned_mentorship_targets')
+    faculty = db.relationship('FacultyProfile', overlaps="assigned_targets,faculty_profile")
 
 
 class MentorshipSession(db.Model):
@@ -47,6 +47,8 @@ class MentorshipSession(db.Model):
     notes = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='Scheduled')  # Scheduled, Completed, Cancelled
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    faculty = db.relationship('FacultyProfile', overlaps="faculty_profile,mentorship_sessions")
 
     student = db.relationship('StudentProfile', backref='mentorship_sessions')
     faculty = db.relationship('FacultyProfile', backref='scheduled_sessions')
