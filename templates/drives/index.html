@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Campus Hiring Drives & Job Openings{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Campus Placement Drives & Live Hiring</h2>
+        <p class="text-muted mb-0" style="font-size:1.05rem;">
+            Official campus recruitment drives for all university programs: 
+            <strong>B.Tech, BCA, MCA, B.Pharma, BBA, MBA</strong>.
+        </p>
+    </div>
+    {% if current_user.is_admin() or current_user.is_faculty() %}
+        <button class="btn btn-pulse-primary" data-bs-toggle="modal" data-bs-target="#postDriveModal">
+            <i class="bi bi-megaphone-fill me-1"></i> Post New Campus Drive
+        </button>
+    {% endif %}
+</div>
+
+<!-- Filters by Course & Status -->
+<div class="pulse-card mb-4">
+    <form method="GET" action="{{ url_for('drives.index') }}" class="row g-3 align-items-center">
+        <div class="col-md-5">
+            <input type="text" name="q" class="form-control" placeholder="Search by company or job role..." value="{{ search }}">
+        </div>
+        <div class="col-md-4">
+            <select name="course" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if course_filter == 'all' %}selected{% endif %}>All Programs (B.Tech, BCA, MCA, B.Pharma, MBA)</option>
+                <option value="B.Tech" {% if course_filter == 'B.Tech' %}selected{% endif %}>B.Tech (Engineering & Tech)</option>
+                <option value="BCA" {% if course_filter == 'BCA' %}selected{% endif %}>BCA (Computer Applications)</option>
+                <option value="MCA" {% if course_filter == 'MCA' %}selected{% endif %}>MCA (Master of Computer Apps)</option>
+                <option value="B.Pharma" {% if course_filter == 'B.Pharma' %}selected{% endif %}>B.Pharma (Pharmacy & Clinical)</option>
+                <option value="BBA" {% if course_filter == 'BBA' %}selected{% endif %}>BBA (Business Administration)</option>
+                <option value="MBA" {% if course_filter == 'MBA' %}selected{% endif %}>MBA (Management)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-secondary w-100 fw-bold">Filter Drives</button>
+        </div>
+    </form>
+</div>
+
+<!-- Active Drives Grid -->
+<div class="row g-4 mb-4">
+    {% for drive in drives %}
+        <div class="col-lg-6">
+            <div class="pulse-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge badge-soft-blue mb-1">{{ drive.company.name }}</span>
+                            <h4 class="fw-bold mb-1 text-dark">{{ drive.title }}</h4>
+                        </div>
+                        <span class="badge {% if drive.is_expired() %}badge-soft-red{% else %}badge-soft-green d-inline-flex align-items-center gap-1{% endif %}">
+                            {% if drive.is_expired() %}Closed{% else %}<span class="live-dot-pulse"></span> Live Campus Drive{% endif %}
+                        </span>
+                    </div>
+
+                    <p class="text-secondary mb-3" style="font-size:1rem;">{{ drive.description }}</p>
+
+                    <!-- Eligibility Highlights -->
+                    <div class="p-3 bg-light rounded border mb-3">
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="d-block small text-muted">Eligible Programs:</span>
+                                <strong class="text-dark">{{ drive.eligible_courses }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="d-block small text-muted">Compensation / Package:</span>
+                                <strong class="text-success">{{ drive.package_ctc }}</strong>
+                            </div>
+                            <div class="col-sm-6 mt-2">
+                                <span class="d-block small text-muted">Minimum CGPA Required:</span>
+                                <strong class="text-dark">{{ drive.min_cgpa }} CGPA</strong>
+                            </div>
+                            <div class="col-sm-6 mt-2">
+                                <span class="d-block small text-muted">Last Date to Apply:</span>
+                                <strong class="text-danger">{{ drive.last_date_to_apply }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mb-2">
+                        <strong>Selection Process:</strong> {{ drive.selection_process }}
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="border-top pt-3 mt-2 d-flex justify-content-between align-items-center">
+                    <span class="small text-muted"><i class="bi bi-geo-alt me-1"></i> {{ drive.job_location }}</span>
+                    <div>
+                        {% if current_user.is_student() %}
+                            {% if drive.id in user_applications %}
+                                <span class="badge badge-soft-green p-2 fs-6">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Status: {{ user_applications[drive.id].status }}
+                                </span>
+                            {% elif drive.is_expired() %}
+                                <button class="btn btn-sm btn-secondary disabled">Application Closed</button>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('drives.apply', drive_id=drive.id) }}">
+                                    <button type="submit" class="btn btn-pulse-primary">
+                                        <i class="bi bi-send-fill me-1"></i> Apply for Drive
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% elif current_user.is_admin() or current_user.is_faculty() %}
+                            <a href="{{ url_for('drives.applicants', drive_id=drive.id) }}" class="btn btn-outline-success btn-sm fw-bold">
+                                <i class="bi bi-people-fill me-1"></i> View Applicants ({{ drive.applications|length }})
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="pulse-card py-5">
+                <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                <h4 class="fw-bold mt-2">No Active Campus Drives Found</h4>
+                <p class="text-muted">No placement drives found matching the selected program filter.</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: Post Campus Drive (Admin & Faculty) -->
+{% if current_user.is_admin() or current_user.is_faculty() %}
+<div class="modal fade" id="postDriveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('drives.post_drive') }}">
+                <div class="modal-header">
+                    <h4 class="modal-title fw-bold">Post New Campus Placement Drive</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Select Company</label>
+                            <select name="company_id" class="form-select" required>
+                                {% for c in companies %}
+                                    <option value="{{ c.id }}">{{ c.name }} ({{ c.tier }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Drive / Role Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Campus Recruitment 2026 - Associate Role" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">Eligible Academic Programs (Select all that apply):</label>
+                        <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="B.Tech" id="c_btech" checked>
+                                <label class="form-check-label fw-semibold" for="c_btech">B.Tech</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="BCA" id="c_bca" checked>
+                                <label class="form-check-label fw-semibold" for="c_bca">BCA</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="MCA" id="c_mca" checked>
+                                <label class="form-check-label fw-semibold" for="c_mca">MCA</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="B.Pharma" id="c_bpharma" checked>
+                                <label class="form-check-label fw-semibold" for="c_bpharma">B.Pharma</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="BBA" id="c_bba">
+                                <label class="form-check-label fw-semibold" for="c_bba">BBA</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="courses" value="MBA" id="c_mba" checked>
+                                <label class="form-check-label fw-semibold" for="c_mba">MBA</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Package (CTC)</label>
+                            <input type="text" name="package_ctc" class="form-control" value="6.0 - 10.0 LPA">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Minimum CGPA</label>
+                            <input type="number" step="0.1" name="min_cgpa" class="form-control" value="6.0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Location</label>
+                            <input type="text" name="job_location" class="form-control" value="Pan India / Hybrid">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Last Date to Apply</label>
+                            <input type="date" name="last_date_to_apply" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Campus Drive Date</label>
+                            <input type="date" name="drive_date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Job Description & Responsibilities</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Outline job scope, project areas, and expectations..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Selection Process Rounds</label>
+                        <input type="text" name="selection_process" class="form-control" value="1. Online Domain Test -> 2. Technical Interview -> 3. HR Round">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-pulse-primary">Publish Campus Drive</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

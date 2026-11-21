@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Assigned Students{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Assigned Mentorship Cohort</h3>
+        <p class="text-muted small mb-0">Monitor student preparation consistency, review heatmaps, and assign learning targets.</p>
+    </div>
+</div>
+
+<div class="pulse-card">
+    <form method="GET" action="{{ url_for('faculty.students_list') }}" class="row g-2 align-items-center mb-3">
+        <div class="col-md-6">
+            <input type="text" name="q" class="form-control" placeholder="Search student name or enrollment number..." value="{{ search }}">
+        </div>
+        <div class="col-md-4">
+            <select name="department" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if dept_filter == 'all' %}selected{% endif %}>All Departments</option>
+                <option value="Computer Science & Engineering" {% if dept_filter == 'Computer Science & Engineering' %}selected{% endif %}>Computer Science & Engineering</option>
+                <option value="Information Technology" {% if dept_filter == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
+        </div>
+    </form>
+
+    {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Enrollment No</th>
+                        <th>Institutional Status</th>
+                        <th>Department & Sem</th>
+                        <th>Current Streak</th>
+                        <th>Active Days</th>
+                        <th>Target Companies</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-light border text-center fw-bold" style="width:34px;height:34px;line-height:32px;">
+                                        {{ s.user.first_name[0] }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold small">{{ s.user.full_name }}</div>
+                                        <div class="text-muted" style="font-size:0.75rem;">{{ s.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ s.enrollment_number }}</span></td>
+                            <td>
+                                {% if s.user.email.endswith('@kiet.edu') or 'kiet' in s.user.email.lower() or s.user.email.endswith('@kite.edu') or 'kite' in s.user.email.lower() %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">
+                                        <i class="bi bi-patch-check-fill me-1"></i> Verified KIET Student
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle fw-semibold">
+                                        <i class="bi bi-shield-check me-1"></i> Institutional Roster
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td><span class="small text-muted">{{ s.department }} (Sem {{ s.semester }})</span></td>
+                            <td>
+                                {% if s.streak and s.streak.current_streak > 0 %}
+                                    <span class="badge badge-soft-green"><i class="bi bi-fire text-warning me-1"></i>{{ s.streak.current_streak }} Days</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted border">0 Days</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="fw-semibold small">{{ s.streak.total_active_days if s.streak else 0 }}</span></td>
+                            <td><span class="small text-muted text-truncate d-inline-block" style="max-width: 140px;">{{ s.target_companies }}</span></td>
+                            <td class="text-end">
+                                <a href="{{ url_for('faculty.student_detail', student_id=s.id) }}" class="btn btn-sm btn-pulse-primary">
+                                    <i class="bi bi-eye me-1"></i> View Profile & Heatmap
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-people fs-1"></i>
+            <p class="mt-2 mb-0">No students found assigned to your mentorship batches.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

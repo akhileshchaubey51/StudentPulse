@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Mentorship Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Faculty Mentorship & Monitoring Console</h3>
+        <p class="text-muted small mb-0">{{ profile.department if profile else 'Faculty Portal' }} &bull; Incharge: <span class="fw-semibold text-dark">{{ current_user.full_name }}</span></p>
+    </div>
+    <a href="{{ url_for('faculty.students_list') }}" class="btn btn-pulse-primary btn-sm">
+        <i class="bi bi-people-fill me-1"></i> Manage Assigned Students
+    </a>
+</div>
+
+<!-- Faculty Stat Cards with Continuous Motion Symbols -->
+<div class="row g-3 mb-4">
+    <!-- 1. Assigned Students -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-primary">{{ total_assigned }}</div>
+                <div class="stat-label">Assigned Students</div>
+                <div class="small text-muted mt-1">
+                    <i class="bi bi-mortarboard text-primary me-1"></i>Mentorship Cohort
+                </div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-blue">
+                <i class="bi bi-people-fill motion-float"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Actively Preparing (7 Days) -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-success">{{ active_count }}</div>
+                <div class="stat-label">Actively Preparing (7 Days)</div>
+                <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                    <span class="live-dot-pulse"></span> Continuous Learning
+                </div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-green motion-radar-pulse">
+                <i class="bi bi-activity motion-pulse-fire"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. At-Risk / Needs Support -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-danger">{{ at_risk_students|length }}</div>
+                <div class="stat-label">At-Risk / Needs Support</div>
+                <div class="small text-danger mt-1 fw-semibold">
+                    <i class="bi bi-bell-fill motion-alert-pulse me-1"></i>Action Required
+                </div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-red">
+                <i class="bi bi-exclamation-triangle-fill motion-alert-pulse"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Pending Project Reviews -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-warning">{{ pending_projects|length }}</div>
+                <div class="stat-label">Pending Project Reviews</div>
+                <div class="small text-muted mt-1">
+                    <i class="bi bi-clock-history motion-spin-slow me-1"></i>Awaiting Evaluation
+                </div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-yellow">
+                <i class="bi bi-folder-check motion-sway"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Faculty Live Insight & Demo Simulation Helper -->
+<div class="alert alert-light border shadow-sm p-3 mb-4 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+            <i class="bi bi-info-circle-fill motion-sparkle fs-6"></i>
+        </div>
+        <div>
+            <div class="fw-bold small text-dark">Cohort Activity Logic & Real-Time Tracking</div>
+            <div class="text-muted small">
+                Students with learning activity logged within the trailing 7 days are marked as <strong>Actively Preparing</strong>. Inactive students (no prep in 7+ days) are automatically placed under <strong>At-Risk</strong>.
+            </div>
+        </div>
+    </div>
+    {% if students %}
+        <div>
+            <form action="{{ url_for('faculty.quick_log_prep', student_id=students[0].id) }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success fw-bold d-inline-flex align-items-center gap-1 shadow-sm">
+                    <i class="bi bi-lightning-charge-fill text-warning motion-pulse-fire"></i>
+                    Simulate Student Prep Today (Demo)
+                </button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<!-- At-Risk Students Warning Section -->
+{% if at_risk_students %}
+    <div class="pulse-card border-danger mb-4">
+        <div class="pulse-card-header">
+            <h5 class="pulse-card-title text-danger">
+                <i class="bi bi-shield-exclamation text-danger"></i> At-Risk Students Requiring Mentorship Intervention
+            </h5>
+            <span class="badge badge-soft-red">{{ at_risk_students|length }} Flags Identified</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Enrollment No</th>
+                        <th>Identified Reason</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in at_risk_students %}
+                        <tr>
+                            <td>
+                                <span class="fw-bold">{{ item.student.user.full_name }}</span>
+                                <div class="text-muted" style="font-size:0.75rem;">{{ item.student.department }}</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ item.student.enrollment_number }}</span></td>
+                            <td><span class="text-danger small fw-semibold"><i class="bi bi-dash-circle me-1"></i>{{ item.reason }}</span></td>
+                            <td class="text-end">
+                                <a href="{{ url_for('faculty.student_detail', student_id=item.student.id) }}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-chat-dots me-1"></i> Intervene & Guide
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Pending Project Reviews & Recent Feedbacks -->
+<div class="row g-4">
+    <!-- Pending Projects -->
+    <div class="col-lg-6">
+        <div class="pulse-card h-100">
+            <div class="pulse-card-header">
+                <h5 class="pulse-card-title"><i class="bi bi-folder text-warning"></i> Submitted Student Projects</h5>
+            </div>
+            {% if pending_projects %}
+                <div class="list-group list-group-flush">
+                    {% for p in pending_projects %}
+                        <div class="list-group-item px-0 py-3 border-0 border-bottom d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="fw-bold small">{{ p.title }}</div>
+                                <span class="small text-muted">By {{ p.student_profile.user.full_name }} &bull; {{ p.tech_stack }}</span>
+                            </div>
+                            <a href="{{ url_for('faculty.student_detail', student_id=p.student_id) }}" class="btn btn-sm btn-outline-success">
+                                Review Code
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">No pending student projects awaiting evaluation.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Mentorship Feedback Given -->
+    <div class="col-lg-6">
+        <div class="pulse-card h-100">
+            <div class="pulse-card-header">
+                <h5 class="pulse-card-title"><i class="bi bi-chat-left-dots text-primary"></i> Recent Feedback Sent</h5>
+            </div>
+            {% if recent_feedbacks %}
+                <div class="list-group list-group-flush">
+                    {% for f in recent_feedbacks %}
+                        <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-dark">To: {{ f.student_profile.user.full_name }}</span>
+                                <span class="badge {% if f.is_at_risk_alert %}badge-soft-red{% else %}badge-soft-green{% endif %}">{{ f.category }}</span>
+                            </div>
+                            <p class="small text-secondary mb-1">"{{ f.feedback_text }}"</p>
+                            <span class="text-muted" style="font-size:0.7rem;">{{ f.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">No feedback entries recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

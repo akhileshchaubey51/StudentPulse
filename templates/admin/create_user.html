@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Provision User Account{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Users</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="pulse-card">
+            <h4 class="fw-bold mb-3"><i class="bi bi-person-plus text-primary me-1"></i> Provision New User</h4>
+            <form method="POST">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">First Name</label>
+                        <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="user@kiet.edu" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Initial Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Assigned Role</label>
+                    <select name="role" class="form-select" id="roleSelect" onchange="toggleRoleFields()">
+                        <option value="student" selected>Student</option>
+                        <option value="faculty">Faculty</option>
+                    </select>
+                </div>
+
+                <div id="studentFields">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Enrollment Number</label>
+                            <input type="text" name="enrollment_number" class="form-control" placeholder="EN23CS1001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Graduation Year</label>
+                            <input type="number" name="graduation_year" class="form-control" value="2026">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Academic Department</label>
+                    <select name="department" class="form-select">
+                        {% for d in departments %}
+                            <option value="{{ d.name }}">{{ d.name }} ({{ d.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-pulse-primary py-2 px-4">Create Account</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRoleFields() {
+    const role = document.getElementById('roleSelect').value;
+    const sf = document.getElementById('studentFields');
+    if (role === 'student') {
+        sf.style.display = 'block';
+    } else {
+        sf.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

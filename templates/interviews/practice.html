@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Mock Interview Practice{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('interviews.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Questions</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="pulse-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge {% if question.question_type == 'Technical' %}badge-soft-blue{% else %}badge-soft-yellow{% endif %}">{{ question.question_type }}</span>
+                <span class="badge bg-light text-dark border">{{ question.skill_topic }}</span>
+            </div>
+            <h4 class="fw-bold mb-3">{{ question.question_text }}</h4>
+
+            {% if question.key_points %}
+                <div class="p-3 bg-light rounded border mb-4">
+                    <span class="fw-bold small d-block mb-1"><i class="bi bi-card-checklist text-success me-1"></i> Interviewer Expectations / Key Talking Points:</span>
+                    <p class="small text-muted mb-0">{{ question.key_points }}</p>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Type Your Structured Response:</label>
+                    <textarea name="student_answer" class="form-control" rows="8" placeholder="Start with core definitions, trade-offs, practical examples from projects, and edge-case handling..." required>{{ student_ans }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-pulse-primary w-100 py-2">
+                    <i class="bi bi-robot me-1"></i> Submit for AI Interview Evaluation
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Evaluation Feedback Panel -->
+    <div class="col-lg-6">
+        <div class="pulse-card h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-stars text-warning me-1"></i> AI Evaluation & Feedback</h5>
+            {% if eval_result %}
+                <div class="text-center py-3">
+                    <div class="display-4 fw-bold {% if eval_result.score >= 75 %}text-success{% elif eval_result.score >= 50 %}text-warning{% else %}text-danger{% endif %} mb-1">
+                        {{ eval_result.score }}/100
+                    </div>
+                    <span class="badge {% if eval_result.score >= 75 %}badge-soft-green{% elif eval_result.score >= 50 %}badge-soft-yellow{% else %}badge-soft-red{% endif %}">
+                        Assessment Rating
+                    </span>
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-3">
+                    <span class="fw-bold small d-block mb-1 text-dark">Constructive Mentor Feedback:</span>
+                    <p class="small text-secondary mb-0">{{ eval_result.feedback }}</p>
+                </div>
+
+                <div class="alert alert-success border-0 small">
+                    <i class="bi bi-check-circle me-1"></i> Mock session recorded! Your daily activity streak has been updated.
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-chat-dots fs-1 text-secondary"></i>
+                    <p class="small mt-2 mb-0">Type your answer and submit to receive instant AI-assisted feedback on technical precision and clarity.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Result{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('coding.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Assessments</a>
+</div>
+
+<div class="pulse-card text-center mb-4">
+    <h3 class="fw-bold mb-1">{{ attempt.assessment.title }} - Result</h3>
+    <p class="text-muted small mb-3">Completed on {{ attempt.completed_at.strftime('%b %d, %Y at %H:%M') }}</p>
+
+    <div class="display-3 fw-bold {% if attempt.passed %}text-success{% else %}text-danger{% endif %} my-2">
+        {{ attempt.score }}%
+    </div>
+    <span class="badge {% if attempt.passed %}badge-soft-green{% else %}badge-soft-red{% endif %} fs-6 mb-3">
+        {% if attempt.passed %}Passed Assessment ({{ attempt.correct_answers }}/{{ attempt.total_questions }} Correct){% else %}Below Passing Criteria ({{ attempt.score }}% / Min {{ attempt.assessment.passing_score }}%){% endif %}
+    </span>
+    <p class="small text-muted mb-0"><i class="bi bi-check2-circle text-success"></i> Genuine activity logged! Your contribution heatmap and streaks have been updated.</p>
+</div>
+
+<!-- Detailed Question Review -->
+<div class="pulse-card">
+    <h5 class="fw-bold mb-3">Detailed Answer Analysis</h5>
+    <div class="d-flex flex-column gap-3">
+        {% for ans in attempt.answers %}
+            {% set q = ans.question %}
+            <div class="p-3 rounded border {% if ans.is_correct %}border-success bg-light{% else %}border-danger bg-light{% endif %}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-dark">Question {{ loop.index }}</span>
+                    {% if ans.is_correct %}
+                        <span class="badge badge-soft-green"><i class="bi bi-check-circle me-1"></i> Correct</span>
+                    {% else %}
+                        <span class="badge badge-soft-red"><i class="bi bi-x-circle me-1"></i> Incorrect</span>
+                    {% endif %}
+                </div>
+                <p class="fw-semibold mb-2 text-dark">{{ q.question_text }}</p>
+
+                <div class="small mb-2">
+                    {% for opt in q.get_options() %}
+                        <div class="p-1 rounded {% if loop.index0 == q.correct_option %}text-success fw-bold{% elif loop.index0 == ans.selected_option and not ans.is_correct %}text-danger text-decoration-line-through{% else %}text-muted{% endif %}">
+                            {{ loop.index0 + 1 }}. {{ opt }}
+                            {% if loop.index0 == q.correct_option %}<span class="badge badge-soft-green ms-2">Correct Answer</span>{% endif %}
+                            {% if loop.index0 == ans.selected_option and not ans.is_correct %}<span class="badge badge-soft-red ms-2">Your Choice</span>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if q.explanation %}
+                    <div class="border-top pt-2 mt-2 small text-muted">
+                        <strong>Explanation:</strong> {{ q.explanation }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

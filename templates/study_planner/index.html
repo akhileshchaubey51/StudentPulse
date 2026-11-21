@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}AI Study Planner{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">AI Study Planner</h3>
+        <p class="text-muted small mb-0">Personalized daily and weekly preparation schedules tailored to your college hours and company skill gaps.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+            <i class="bi bi-plus-lg me-1"></i> Add Custom Task
+        </button>
+        <button class="btn btn-pulse-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generatePlanModal">
+            <i class="bi bi-robot me-1"></i> Generate AI Plan
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Sidebar: Saved Study Plans -->
+    <div class="col-lg-4">
+        <div class="pulse-card">
+            <h5 class="fw-bold mb-3">Study Plans</h5>
+            {% if plans %}
+                <div class="list-group list-group-flush">
+                    {% for p in plans %}
+                        <a href="{{ url_for('study_planner.index', plan_id=p.id) }}"
+                           class="list-group-item list-group-item-action px-2 py-3 border-0 border-bottom {% if selected_plan and selected_plan.id == p.id %}bg-light rounded{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-truncate" style="max-width: 180px;">{{ p.title }}</span>
+                                <span class="badge {% if p.status == 'Active' %}badge-soft-green{% else %}badge-soft-blue{% endif %}">{{ p.status }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small text-muted">
+                                <span>Target: {{ p.target_company or 'General' }}</span>
+                                <span>{{ p.progress_percentage() }}% Done</span>
+                            </div>
+                            <div class="progress-pulse mt-2">
+                                <div class="progress-pulse-bar" style="width: {{ p.progress_percentage() }}%;"></div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-3">No study plans created yet.</p>
+                <button class="btn btn-pulse-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#generatePlanModal">Generate First Plan</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Side: Tasks for Selected Plan -->
+    <div class="col-lg-8">
+        {% if selected_plan %}
+            <div class="pulse-card">
+                <div class="pulse-card-header flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">{{ selected_plan.title }}</h4>
+                        <span class="small text-muted">
+                            Target: <strong>{{ selected_plan.target_company }}</strong> ({{ selected_plan.target_role }}) &bull; {{ selected_plan.weekly_hours }} hrs/week
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-soft-green fs-6">{{ selected_plan.progress_percentage() }}% Completed</span>
+                    </div>
+                </div>
+
+                <!-- Task Filter Tabs -->
+                <div class="d-flex gap-2 mb-3">
+                    <a href="{{ url_for('study_planner.index', plan_id=selected_plan.id, status='all') }}" class="btn btn-sm btn-outline-secondary">All Tasks</a>
+                    <a href="{{ url_for('study_planner.index', plan_id=selected_plan.id, status='pending') }}" class="btn btn-sm btn-outline-warning">Pending</a>
+                    <a href="{{ url_for('study_planner.index', plan_id=selected_plan.id, status='completed') }}" class="btn btn-sm btn-outline-success">Completed</a>
+                </div>
+
+                <!-- Tasks List -->
+                {% if tasks %}
+                    <div class="list-group list-group-flush">
+                        {% for t in tasks %}
+                            <div class="list-group-item px-0 py-3 border-0 border-bottom d-flex align-items-start justify-content-between gap-3">
+                                <div class="d-flex align-items-start gap-2">
+                                    <form method="POST" action="{{ url_for('study_planner.toggle_task', task_id=t.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none mt-1" title="Toggle completion">
+                                            {% if t.is_completed %}
+                                                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                                            {% else %}
+                                                <i class="bi bi-circle fs-5 text-secondary"></i>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <div>
+                                        <div class="fw-bold small {% if t.is_completed %}text-decoration-line-through text-muted{% endif %}">
+                                            {{ t.title }}
+                                        </div>
+                                        <p class="small text-muted mb-1">{{ t.description }}</p>
+                                        <div class="d-flex flex-wrap align-items-center gap-2" style="font-size:0.75rem;">
+                                            <span class="badge badge-soft-blue">{{ t.skill_name }}</span>
+                                            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ t.duration_minutes }} mins</span>
+                                            <span class="text-muted"><i class="bi bi-calendar-event me-1"></i>Scheduled: {{ t.scheduled_date }}</span>
+                                            {% if t.resources %}
+                                                <span class="text-success"><i class="bi bi-book me-1"></i>{{ t.resources }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge {% if t.priority == 'High' %}badge-soft-red{% elif t.priority == 'Medium' %}badge-soft-yellow{% else %}badge-soft-blue{% endif %}">
+                                    {{ t.priority }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2 mb-0">No tasks found for this filter.</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="pulse-card text-center py-5">
+                <i class="bi bi-journal-plus fs-1 text-muted"></i>
+                <h5 class="fw-bold mt-2">No Plan Selected</h5>
+                <p class="text-muted small">Select an existing study plan from the left or generate a new AI preparation sprint.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Generate AI Plan -->
+<div class="modal fade" id="generatePlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('study_planner.generate') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Generate AI Study Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Plan Title</label>
+                        <input type="text" name="title" class="form-control" value="AI Placement Sprint - 30 Days" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Company</label>
+                        <select name="target_company" class="form-select">
+                            {% for c in companies %}
+                                <option value="{{ c.name }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Role</label>
+                        <input type="text" name="target_role" class="form-control" value="Software Engineer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Available Study Hours per Week</label>
+                        <input type="number" name="weekly_hours" class="form-control" value="14" min="4" max="40">
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-cpu text-success"></i> Our local AI engine compares your missing skills against the company profile to synthesize realistic, high-impact tasks.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-pulse-primary">Generate Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Custom Task -->
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {% if selected_plan %}
+                <form method="POST" action="{{ url_for('study_planner.add_task') }}">
+                    <input type="hidden" name="plan_id" value="{{ selected_plan.id }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Add Custom Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Task Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Solve LeetCode Top 50 SQL" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Skill / Subject</label>
+                                <input type="text" name="skill_name" class="form-control" placeholder="e.g. SQL">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Duration (Mins)</label>
+                                <input type="number" name="duration_minutes" class="form-control" value="45">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Priority</label>
+                                <select name="priority" class="form-select">
+                                    <option value="High">High</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Scheduled Date</label>
+                                <input type="date" name="scheduled_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-pulse-primary">Add Task</button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="modal-body text-center py-4">
+                    <p class="text-muted">Please select or generate a study plan first.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

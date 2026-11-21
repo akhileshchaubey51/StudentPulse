@@ -1,0 +1,1582 @@
+{% extends "base.html" %}
+
+{% block title %}20+ Mind-Freshening Games Zone - Student Pulse{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-controller text-primary motion-pulse-fire me-2"></i>20+ Mind-Freshening Games Zone
+        </h2>
+        <p class="text-muted mb-0">
+            Boost focus, test logic, and refresh your mind with interactive games in <strong>Coding, Programming, Mental Math & Aptitude</strong>.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('coding.practice') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-patch-question me-1"></i> Practice Questions Bank
+        </a>
+    </div>
+</div>
+
+<!-- Category Tabs -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('games.index', q=search) }}" 
+       class="btn btn-sm {% if category_filter == 'all' %}btn-dark fw-bold{% else %}btn-outline-secondary bg-white{% endif %}">
+       All Games ({{ total_games }})
+    </a>
+    <a href="{{ url_for('games.index', category='Code & Dev Logic', q=search) }}" 
+       class="btn btn-sm {% if category_filter == 'Code & Dev Logic' %}btn-primary fw-bold{% else %}btn-outline-primary bg-white{% endif %}">
+       <i class="bi bi-code-slash me-1"></i> Code & Dev Logic (8)
+    </a>
+    <a href="{{ url_for('games.index', category='Math & Quant Aptitude', q=search) }}" 
+       class="btn btn-sm {% if category_filter == 'Math & Quant Aptitude' %}btn-success fw-bold{% else %}btn-outline-success bg-white{% endif %}">
+       <i class="bi bi-calculator me-1"></i> Math & Quant Aptitude (7)
+    </a>
+    <a href="{{ url_for('games.index', category='Brain Teasers & CS Logic', q=search) }}" 
+       class="btn btn-sm {% if category_filter == 'Brain Teasers & CS Logic' %}btn-warning fw-bold text-dark{% else %}btn-outline-warning bg-white text-dark{% endif %}">
+       <i class="bi bi-puzzle me-1"></i> Brain Teasers & CS Logic (6)
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="pulse-card mb-4">
+    <form method="GET" action="{{ url_for('games.index') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="category" value="{{ category_filter }}">
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="Search game (e.g. Binary Search, Mental Math, 2048, Syntax Typer)..." value="{{ search }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-pulse-primary w-100">Search Games</button>
+        </div>
+    </form>
+</div>
+
+<!-- Games Grid -->
+<div class="row g-4 mb-4">
+    {% for g in games %}
+        <div class="col-md-6 col-xl-4">
+            <div class="pulse-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="stat-icon-wrap stat-icon-{{ g.color }} motion-float" style="width:48px;height:48px;font-size:1.3rem;">
+                                <i class="bi {{ g.icon }}"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">{{ g.title }}</h5>
+                                <span class="badge badge-soft-{{ g.color }} small">{{ g.category }}</span>
+                            </div>
+                        </div>
+                        <span class="badge {% if g.difficulty == 'Easy' %}badge-soft-green{% elif g.difficulty == 'Medium' %}badge-soft-yellow{% else %}badge-soft-red{% endif %}">
+                            {{ g.difficulty }}
+                        </span>
+                    </div>
+
+                    <p class="text-secondary small mb-3" style="min-height: 48px; font-size:0.98rem; line-height:1.6;">
+                        {{ g.desc }}
+                    </p>
+
+                    <div class="small text-muted mb-2">
+                        <i class="bi bi-people me-1"></i><strong>{{ g.plays }}</strong> students played this week
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                    <span class="badge bg-light text-muted border"><i class="bi bi-stars text-warning me-1"></i>Brain Booster</span>
+                    <button class="btn btn-sm btn-pulse-primary" onclick="launchGame('{{ g.id }}', '{{ g.title }}', '{{ g.category }}')">
+                        <i class="bi bi-play-fill me-1"></i> Play Game Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Interactive Live Game Modal Player -->
+<div class="modal fade" id="gameModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-controller fs-4 text-warning motion-pulse-fire"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0 text-white" id="modalGameTitle">Game Arena</h5>
+                        <small class="text-muted" id="modalGameCategory">Interactive Skill Challenge</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="badge bg-success fs-6" id="gameScoreBadge">Score: <span id="gameScore">0</span></div>
+                    <div class="badge bg-danger fs-6" id="gameTimerBadge"><i class="bi bi-clock me-1"></i><span id="gameTimer">30</span>s</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopCurrentGame()"></button>
+                </div>
+            </div>
+            <div class="modal-body p-4" id="gameArenaBody">
+                <!-- Dynamically loaded game engine -->
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="stopCurrentGame()">Exit Game</button>
+                <button type="button" class="btn btn-pulse-primary" id="btnRestartGame" onclick="restartCurrentGame()">
+                    <i class="bi bi-arrow-repeat me-1"></i> Restart Game
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeGameId = null;
+    let activeGameTitle = '';
+    let gameTimerInterval = null;
+    let timeLeft = 30;
+    let currentScore = 0;
+    let gameSecretTarget = 0;
+    let guessCount = 0;
+
+    function launchGame(id, title, category) {
+        activeGameId = id;
+        activeGameTitle = title;
+        document.getElementById('modalGameTitle').innerText = title;
+        document.getElementById('modalGameCategory').innerText = category;
+        currentScore = 0;
+        document.getElementById('gameScore').innerText = currentScore;
+        
+        const modal = new bootstrap.Modal(document.getElementById('gameModal'));
+        modal.show();
+        
+        initGameEngine(id);
+    }
+
+    function restartCurrentGame() {
+        if (activeGameId) {
+            initGameEngine(activeGameId);
+        }
+    }
+
+    function stopCurrentGame() {
+        if (gameTimerInterval) {
+            clearInterval(gameTimerInterval);
+        }
+        if (window._key2048Handler) {
+            window.removeEventListener('keydown', window._key2048Handler);
+            window._key2048Handler = null;
+        }
+    }
+
+    function initGameEngine(id) {
+        stopCurrentGame();
+        const arena = document.getElementById('gameArenaBody');
+        currentScore = 0;
+        document.getElementById('gameScore').innerText = currentScore;
+
+        if (id === 'mental_math_sprint') {
+            startMentalMath(arena);
+        } else if (id === 'binary_search') {
+            startBinarySearch(arena);
+        } else if (id === 'prime_blitz') {
+            startPrimeBlitz(arena);
+        } else if (id === 'big_o_battle') {
+            startBigOBattle(arena);
+        } else if (id === 'syntax_typer') {
+            startSyntaxTyper(arena);
+        } else if (id === 'code_output') {
+            startCodeOutput(arena);
+        } else if (id === 'logic_gates') {
+            startLogicGates(arena);
+        } else if (id === 'keyword_scramble') {
+            startKeywordScramble(arena);
+        } else if (id === 'base_converter') {
+            startBaseConverter(arena);
+        } else if (id === 'regex_puzzle') {
+            startRegexPuzzle(arena);
+        } else if (id === 'bug_hunter') {
+            startBugHunter(arena);
+        } else if (id === 'stack_balancer') {
+            startStackBalancer(arena);
+        } else if (id === 'git_blitz') {
+            startGitBlitz(arena);
+        } else if (id === 'number_series') {
+            startNumberSeries(arena);
+        } else if (id === 'percentage_hustle') {
+            startPercentageHustle(arena);
+        } else if (id === 'probability_dice') {
+            startProbabilityDice(arena);
+        } else if (id === 'speed_algebra') {
+            startSpeedAlgebra(arena);
+        } else if (id === 'time_and_work') {
+            startTimeAndWork(arena);
+        } else if (id === 'bytes_2048') {
+            startBytes2048(arena);
+        } else if (id === 'memory_matrix') {
+            startMemoryMatrix(arena);
+        } else if (id === 'tower_of_hanoi') {
+            startTowerOfHanoi(arena);
+        } else {
+            startMentalMath(arena);
+        }
+    }
+
+    // 1. MENTAL MATH SPRINT
+    function startMentalMath(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Time's Up! Awesome Speed! Your Score: " + currentScore);
+            }
+        }, 1000);
+
+        loadNextMathQuestion(arena);
+    }
+
+    function loadNextMathQuestion(arena) {
+        const ops = ['+', '-', '*'];
+        const op = ops[Math.floor(Math.random() * ops.length)];
+        let a = Math.floor(Math.random() * 20) + 2;
+        let b = Math.floor(Math.random() * 12) + 2;
+        if (op === '-' && b > a) { [a, b] = [b, a]; }
+        const correct = eval(`${a} ${op} ${b}`);
+
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-primary-subtle text-primary mb-2">Mental Math Speed Test</span>
+                <h1 class="display-3 fw-bold text-dark mb-4">${a} ${op === '*' ? '×' : op} ${b} = ?</h1>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <input type="number" id="mathAnswerInput" class="form-control form-control-lg text-center" style="max-width:200px;font-size:2rem;font-weight:bold;" autofocus>
+                    <button class="btn btn-pulse-primary btn-lg px-4" onclick="checkMathAnswer(${correct})">Submit</button>
+                </div>
+                <div class="small text-muted">Press Enter to quickly submit answers</div>
+            </div>
+        `;
+        const inp = document.getElementById('mathAnswerInput');
+        inp.focus();
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkMathAnswer(correct);
+            }
+        });
+    }
+
+    function checkMathAnswer(correct) {
+        const val = parseInt(document.getElementById('mathAnswerInput').value);
+        if (val === correct) {
+            currentScore += 10;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextMathQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 2. BINARY SEARCH MATRIX
+    function startBinarySearch(arena) {
+        gameSecretTarget = Math.floor(Math.random() * 100) + 1;
+        guessCount = 0;
+        timeLeft = 60;
+        document.getElementById('gameTimer').innerText = timeLeft;
+
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Time's Up! The target was: " + gameSecretTarget);
+            }
+        }, 1000);
+
+        renderBinarySearch(arena, "I am thinking of a number between 1 and 100. Guess it in log2(100) <= 7 steps!");
+    }
+
+    function renderBinarySearch(arena, feedback, alertClass="info") {
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-success-subtle text-success mb-2">Binary Search Guessing</span>
+                <div class="alert alert-${alertClass} py-3 fs-5 fw-bold mb-4">
+                    ${feedback}
+                </div>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <input type="number" id="bsGuessInput" min="1" max="100" class="form-control form-control-lg text-center" style="max-width:200px;font-size:2rem;font-weight:bold;" placeholder="1-100" autofocus>
+                    <button class="btn btn-pulse-primary btn-lg px-4" onclick="submitBSGuess()">Guess</button>
+                </div>
+                <div class="small text-muted">Total Guesses: <strong class="text-primary">${guessCount}</strong> / 7 Optimal Steps</div>
+            </div>
+        `;
+        const inp = document.getElementById('bsGuessInput');
+        inp.focus();
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBSGuess();
+            }
+        });
+    }
+
+    function submitBSGuess() {
+        const guess = parseInt(document.getElementById('bsGuessInput').value);
+        if (isNaN(guess)) return;
+        guessCount++;
+
+        if (guess === gameSecretTarget) {
+            stopCurrentGame();
+            currentScore += Math.max(10, 100 - (guessCount * 10));
+            document.getElementById('gameScore').innerText = currentScore;
+            finishGame(`🎉 SUCCESS! You found ${gameSecretTarget} in ${guessCount} guesses! Score: ${currentScore}`);
+        } else if (guess < gameSecretTarget) {
+            renderBinarySearch(document.getElementById('gameArenaBody'), `📈 ${guess} is TOO LOW! Search higher (range ${guess + 1} - 100)`, 'warning');
+        } else {
+            renderBinarySearch(document.getElementById('gameArenaBody'), `📉 ${guess} is TOO HIGH! Search lower (range 1 - ${guess - 1})`, 'primary');
+        }
+    }
+
+    // 3. PRIME BLITZ
+    function startPrimeBlitz(arena) {
+        timeLeft = 35;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Sprint Complete! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextPrime(arena);
+    }
+
+    function isPrime(num) {
+        if (num <= 1) return false;
+        if (num <= 3) return true;
+        if (num % 2 === 0 || num % 3 === 0) return false;
+        for (let i = 5; i * i <= num; i += 6) {
+            if (num % i === 0 || num % (i + 2) === 0) return false;
+        }
+        return true;
+    }
+
+    function loadNextPrime(arena) {
+        const num = Math.floor(Math.random() * 90) + 3;
+        const prime = isPrime(num);
+
+        arena.innerHTML = `
+            <div class="text-center py-4">
+                <span class="badge bg-danger-subtle text-danger mb-2">Prime Number Blitz</span>
+                <h1 class="display-1 fw-bold text-dark my-4">${num}</h1>
+                <div class="d-flex justify-content-center gap-4 mt-3">
+                    <button class="btn btn-success btn-lg px-5 py-3 fs-3 fw-bold shadow" onclick="answerPrime(${prime}, true)">
+                        <i class="bi bi-check-circle me-2"></i> PRIME
+                    </button>
+                    <button class="btn btn-danger btn-lg px-5 py-3 fs-3 fw-bold shadow" onclick="answerPrime(${prime}, false)">
+                        <i class="bi bi-x-circle me-2"></i> COMPOSITE
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function answerPrime(actualIsPrime, userGuess) {
+        if (actualIsPrime === userGuess) {
+            currentScore += 10;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextPrime(document.getElementById('gameArenaBody'));
+    }
+
+    // 4. BIG-O BATTLE
+    function startBigOBattle(arena) {
+        timeLeft = 40;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Battle Done! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextBigO(arena);
+    }
+
+    const bigOOrder = ['O(1)', 'O(log N)', 'O(N)', 'O(N log N)', 'O(N^2)', 'O(2^N)'];
+
+    function loadNextBigO(arena) {
+        let i = Math.floor(Math.random() * bigOOrder.length);
+        let j = Math.floor(Math.random() * bigOOrder.length);
+        while (i === j) { j = Math.floor(Math.random() * bigOOrder.length); }
+
+        const c1 = bigOOrder[i];
+        const c2 = bigOOrder[j];
+        const faster = (i < j) ? c1 : c2;
+
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-success-subtle text-success mb-2">Big-O Speed Battle</span>
+                <h3 class="fw-bold mb-4">Which Time Complexity is ASYMPTOTICALLY FASTER?</h3>
+                <div class="row g-3 justify-content-center">
+                    <div class="col-sm-5">
+                        <button class="btn btn-outline-primary btn-lg w-100 py-4 fs-2 fw-bold shadow-sm" onclick="answerBigO('${c1}', '${faster}')">
+                            ${c1}
+                        </button>
+                    </div>
+                    <div class="col-sm-5">
+                        <button class="btn btn-outline-success btn-lg w-100 py-4 fs-2 fw-bold shadow-sm" onclick="answerBigO('${c2}', '${faster}')">
+                            ${c2}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function answerBigO(chosen, faster) {
+        if (chosen === faster) {
+            currentScore += 15;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextBigO(document.getElementById('gameArenaBody'));
+    }
+
+    // 5. SYNTAX SPEED TYPER
+    function startSyntaxTyper(arena) {
+        timeLeft = 35;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Typing Sprint Over! Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextSnippet(arena);
+    }
+
+    const codeSnippets = [
+        "const result = await fetch('/api/skills');",
+        "def fibonacci(n): return n if n <= 1 else fib(n-1) + fib(n-2)",
+        "SELECT student_id, COUNT(*) FROM attempts GROUP BY student_id;",
+        "public static void main(String[] args) {",
+        "class Node { constructor(val) { this.val = val; } }",
+        "items = [x**2 for x in numbers if x % 2 == 0]"
+    ];
+
+    function loadNextSnippet(arena) {
+        const snippet = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+        arena.innerHTML = `
+            <div class="py-2">
+                <span class="badge bg-info-subtle text-info mb-2">Syntax Speed Sprint</span>
+                <p class="text-muted small mb-2">Type the exact line of code below:</p>
+                <div class="p-3 bg-dark text-success rounded-3 font-monospace mb-3 fs-5">${snippet}</div>
+                <input type="text" id="typeInput" class="form-control form-control-lg font-monospace" placeholder="Type here..." autofocus>
+                <div class="text-end mt-2"><button class="btn btn-pulse-primary" onclick="checkTyping('${snippet.replace(/'/g, "\\'")}')">Check</button></div>
+            </div>
+        `;
+        const inp = document.getElementById('typeInput');
+        inp.focus();
+        inp.addEventListener('input', () => {
+            if (inp.value === snippet) {
+                currentScore += 25;
+                document.getElementById('gameScore').innerText = currentScore;
+                loadNextSnippet(arena);
+            }
+        });
+    }
+
+    function checkTyping(snippet) {
+        const inp = document.getElementById('typeInput');
+        if (inp.value === snippet) {
+            currentScore += 25;
+            document.getElementById('gameScore').innerText = currentScore;
+            loadNextSnippet(document.getElementById('gameArenaBody'));
+        }
+    }
+
+    // 6. LOGIC GATES PUZZLE (Dynamic Procedural Generation)
+    function startLogicGates(arena) {
+        timeLeft = 40;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Logic Gates Completed! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextGateQuestion(arena);
+    }
+
+    function loadNextGateQuestion(arena) {
+        const gates = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
+        const gate = gates[Math.floor(Math.random() * gates.length)];
+        const a = Math.round(Math.random());
+        const b = Math.round(Math.random());
+        let expected = 0;
+        if (gate === 'AND') expected = a & b;
+        else if (gate === 'OR') expected = a | b;
+        else if (gate === 'XOR') expected = a ^ b;
+        else if (gate === 'NAND') expected = (a & b) ? 0 : 1;
+        else if (gate === 'NOR') expected = (a | b) ? 0 : 1;
+
+        arena.innerHTML = `
+            <div class="text-center py-4">
+                <span class="badge bg-warning-subtle text-dark mb-2">Digital Logic Gates</span>
+                <h4 class="text-muted mb-2">Compute Output for:</h4>
+                <div class="display-4 fw-bold text-dark my-4 font-monospace">
+                    ${a} <span class="text-primary">${gate}</span> ${b} = ?
+                </div>
+                <div class="d-flex justify-content-center gap-4 mt-3">
+                    <button class="btn btn-outline-primary btn-lg px-5 py-3 fs-2 fw-bold shadow-sm" onclick="checkGateAnswer(${expected}, 0)">
+                        0 (LOW)
+                    </button>
+                    <button class="btn btn-primary btn-lg px-5 py-3 fs-2 fw-bold shadow-sm" onclick="checkGateAnswer(${expected}, 1)">
+                        1 (HIGH)
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function checkGateAnswer(expected, chosen) {
+        if (expected === chosen) {
+            currentScore += 15;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextGateQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 7. BASE CONVERTER BLITZ (Dynamic Procedural)
+    function startBaseConverter(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Base Sprint Complete! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextBaseQuestion(arena);
+    }
+
+    function loadNextBaseQuestion(arena) {
+        const dec = Math.floor(Math.random() * 30) + 2;
+        const bin = dec.toString(2);
+        const mode = Math.random() > 0.5 ? 'dec2bin' : 'bin2dec';
+
+        if (mode === 'dec2bin') {
+            arena.innerHTML = `
+                <div class="text-center py-3">
+                    <span class="badge bg-info-subtle text-info mb-2">Decimal &rarr; Binary Converter</span>
+                    <h2 class="fw-bold mb-3">Convert Decimal <span class="text-primary">${dec}</span> to 8-bit Binary:</h2>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <input type="text" id="baseInput" class="form-control form-control-lg text-center font-monospace" style="max-width:260px;font-size:1.8rem;" placeholder="e.g. 1010" autofocus>
+                        <button class="btn btn-pulse-primary btn-lg px-4" onclick="checkBaseAnswer('${bin}')">Submit</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            arena.innerHTML = `
+                <div class="text-center py-3">
+                    <span class="badge bg-info-subtle text-info mb-2">Binary &rarr; Decimal Converter</span>
+                    <h2 class="fw-bold mb-3">Convert Binary <span class="text-primary font-monospace">${bin}</span> to Decimal:</h2>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <input type="number" id="baseInput" class="form-control form-control-lg text-center" style="max-width:200px;font-size:1.8rem;" placeholder="e.g. 15" autofocus>
+                        <button class="btn btn-pulse-primary btn-lg px-4" onclick="checkBaseAnswer('${dec}')">Submit</button>
+                    </div>
+                </div>
+            `;
+        }
+        const inp = document.getElementById('baseInput');
+        inp.focus();
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkBaseAnswer(mode === 'dec2bin' ? bin : dec.toString());
+            }
+        });
+    }
+
+    function checkBaseAnswer(expected) {
+        const val = document.getElementById('baseInput').value.trim();
+        if (val === expected) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextBaseQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 8. CODE OUTPUT PREDICTOR (Dynamic Procedural)
+    function startCodeOutput(arena) {
+        timeLeft = 50;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Code Predictor Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextCodeOutputQuestion(arena);
+    }
+
+    function loadNextCodeOutputQuestion(arena) {
+        const x = Math.floor(Math.random() * 5) + 2;
+        const y = Math.floor(Math.random() * 4) + 1;
+        const z = Math.floor(Math.random() * 3) + 2;
+        const res = (x * z) + y;
+
+        arena.innerHTML = `
+            <div class="py-2">
+                <span class="badge bg-success-subtle text-success mb-2">Python Output Predictor</span>
+                <p class="text-muted small mb-2">Predict the exact terminal output of this script:</p>
+                <div class="p-3 bg-dark text-light rounded-3 font-monospace mb-3 fs-5">
+                    a = ${x}<br>
+                    b = ${y}<br>
+                    print(a * ${z} + b)
+                </div>
+                <div class="d-flex gap-2">
+                    <input type="number" id="codeOutInput" class="form-control form-control-lg font-monospace text-center" style="max-width:180px;" placeholder="Output" autofocus>
+                    <button class="btn btn-pulse-primary btn-lg px-4" onclick="checkCodeOut(${res})">Submit</button>
+                </div>
+            </div>
+        `;
+        const inp = document.getElementById('codeOutInput');
+        inp.focus();
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkCodeOut(res);
+        });
+    }
+
+    function checkCodeOut(res) {
+        const val = parseInt(document.getElementById('codeOutInput').value);
+        if (val === res) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextCodeOutputQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 9. KEYWORD SCRAMBLE (Dynamic Procedural)
+    function startKeywordScramble(arena) {
+        timeLeft = 40;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Scramble Done! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextScrambleQuestion(arena);
+    }
+
+    const scrambleWords = ["PYTHON", "ALGORITHM", "DATABASE", "BINARY", "NETWORK", "COMPILER", "POINTER", "RECURSION", "STACK", "QUEUE"];
+    function loadNextScrambleQuestion(arena) {
+        const word = scrambleWords[Math.floor(Math.random() * scrambleWords.length)];
+        const scrambled = word.split('').sort(() => 0.5 - Math.random()).join('');
+
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-danger-subtle text-danger mb-2">CS Keyword Scramble</span>
+                <h4 class="text-muted mb-2">Unscramble this Computer Science concept:</h4>
+                <div class="display-3 fw-bold text-primary font-monospace my-3 tracking-wide">
+                    ${scrambled}
+                </div>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <input type="text" id="scrambleInput" class="form-control form-control-lg text-center font-monospace" style="max-width:280px;font-size:1.5rem;text-transform:uppercase;" placeholder="TYPE WORD" autofocus>
+                    <button class="btn btn-pulse-primary btn-lg px-4" onclick="checkScramble('${word}')">Submit</button>
+                </div>
+            </div>
+        `;
+        const inp = document.getElementById('scrambleInput');
+        inp.focus();
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkScramble(word);
+        });
+    }
+
+    function checkScramble(word) {
+        const val = document.getElementById('scrambleInput').value.trim().toUpperCase();
+        if (val === word) {
+            currentScore += 25;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextScrambleQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 10. REGEX PATTERN MATCHER
+    function startRegexPuzzle(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Regex Sprint Done! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextRegex(arena);
+    }
+
+    const regexCatalog = [
+        { target: "2628mca0206@kiet.edu", prompt: "Match official KIET MCA student email address:", correct: "^[\\w.-]+@kiet\\.edu$", wrong: ["^\\d+@kiet\\.edu$", "^[A-Z_]+$", "^#([a-f0-9]{6})$"] },
+        { target: "2026-11-21", prompt: "Match standard ISO date (YYYY-MM-DD):", correct: "^\\d{4}-\\d{2}-\\d{2}$", wrong: ["^\\d{2}/\\d{2}/\\d{4}$", "^[A-Z]{3}-\\d{2}$", "^\\d+\\.\\d+$"] },
+        { target: "#0d6efd", prompt: "Match 6-character Hex color code:", correct: "^#([A-Fa-f0-9]{6})$", wrong: ["^rgb\\(\\d+\\)$", "^#[0-9]{4}$", "^[a-z]+$"] },
+        { target: "192.168.1.100", prompt: "Match IPv4 network address:", correct: "^(\\d{1,3}\\.){3}\\d{1,3}$", wrong: ["^\\d{3}-\\d{3}$", "^[A-F0-9:]+$", "^\\w+://.*$"] },
+        { target: "+91-9876543210", prompt: "Match Indian mobile number with +91 country code:", correct: "^\\+91-\\d{10}$", wrong: ["^\\d{5}$", "^[A-Z]{2}\\d{10}$", "^\\([0-9]\\)$"] },
+        { target: "https://kiet.edu/placement", prompt: "Match HTTPS secure URL:", correct: "^https://[\\w.-]+(/[\\w.-]*)*$", wrong: ["^ftp://\\d+$", "^file://.*$", "^mailto:.*$"] }
+    ];
+
+    function loadNextRegex(arena) {
+        const q = regexCatalog[Math.floor(Math.random() * regexCatalog.length)];
+        const opts = [q.correct, ...q.wrong].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="text-center py-2">
+                <span class="badge bg-danger-subtle text-danger mb-2">Regex Pattern Matcher</span>
+                <p class="text-muted mb-2">${q.prompt}</p>
+                <div class="p-3 bg-dark text-warning rounded-3 font-monospace mb-4 fs-4">${q.target}</div>
+                <div class="row g-3">
+                    ${opts.map(opt => `
+                        <div class="col-sm-6">
+                            <button class="btn btn-outline-dark w-100 py-3 font-monospace fw-bold text-start text-break fs-6" onclick="checkRegexChoice('${encodeURIComponent(opt)}', '${encodeURIComponent(q.correct)}')">
+                                ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkRegexChoice(chosen, correct) {
+        if (decodeURIComponent(chosen) === decodeURIComponent(correct)) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextRegex(document.getElementById('gameArenaBody'));
+    }
+
+    // 11. BUG HUNTER ZAP
+    function startBugHunter(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Bug Hunting Complete! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextBug(arena);
+    }
+
+    const bugCatalog = [
+        {
+            code: "def get_item(arr):\n    for i in range(len(arr)):\n        print(arr[i + 1])",
+            correct: "IndexError (List index out of range)",
+            options: ["IndexError (List index out of range)", "SyntaxError (Invalid indentation)", "KeyError (Missing dictionary key)", "ZeroDivisionError"]
+        },
+        {
+            code: "total_marks = 450\nsubjects = 0\npercentage = total_marks / subjects",
+            correct: "ZeroDivisionError (Division by zero)",
+            options: ["ZeroDivisionError (Division by zero)", "TypeError (Unsupported operand)", "ValueError (Invalid literal)", "NameError (Variable undefined)"]
+        },
+        {
+            code: "student = {'name': 'Rohan', 'college': 'KIET'}\nprint(student['roll_no'])",
+            correct: "KeyError (Key 'roll_no' not found)",
+            options: ["KeyError (Key 'roll_no' not found)", "AttributeError (Object has no attribute)", "IndexError (Out of bounds)", "TypeError (Unhashable type)"]
+        },
+        {
+            code: "cgpa = '8.5'\nif cgpa >= 7.5:\n    print('Eligible for placement')",
+            correct: "TypeError (Cannot compare str and float with '>=')",
+            options: ["TypeError (Cannot compare str and float with '>=')", "ValueError (Conversion error)", "SyntaxError (Missing colon)", "AssertionError"]
+        },
+        {
+            code: "def calculate_sgpa(grades)\n    return sum(grades) / len(grades)",
+            correct: "SyntaxError (Missing colon ':' after def statement)",
+            options: ["SyntaxError (Missing colon ':' after def statement)", "TypeError (Wrong arguments)", "IndentationError", "NameError"]
+        }
+    ];
+
+    function loadNextBug(arena) {
+        const q = bugCatalog[Math.floor(Math.random() * bugCatalog.length)];
+        const opts = [...q.options].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="py-2">
+                <span class="badge bg-danger-subtle text-danger mb-2">Bug Hunter Zap</span>
+                <p class="text-muted small mb-2">Spot which exception or syntax error this code triggers:</p>
+                <pre class="p-3 bg-dark text-warning rounded-3 font-monospace mb-3 fs-6">${q.code}</pre>
+                <div class="row g-2">
+                    ${opts.map(opt => `
+                        <div class="col-sm-6">
+                            <button class="btn btn-outline-danger w-100 py-3 text-start fw-semibold fs-6" onclick="checkBugChoice('${encodeURIComponent(opt)}', '${encodeURIComponent(q.correct)}')">
+                                <i class="bi bi-bug me-1"></i> ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkBugChoice(chosen, correct) {
+        if (decodeURIComponent(chosen) === decodeURIComponent(correct)) {
+            currentScore += 25;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextBug(document.getElementById('gameArenaBody'));
+    }
+
+    // 12. BRACKET STACK BALANCER
+    function startStackBalancer(arena) {
+        timeLeft = 40;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Stack Balancer Done! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextBracket(arena);
+    }
+
+    const bracketList = [
+        { expr: "{ [ ( ) ] }", valid: true },
+        { expr: "( [ { } ] )", valid: true },
+        { expr: "{ [ ( ] ) }", valid: false },
+        { expr: "( ( ( ) ) )", valid: true },
+        { expr: "{ ( [ ] ) } [ ]", valid: true },
+        { expr: "( { [ } ] )", valid: false },
+        { expr: "[ { ( ) } )", valid: false },
+        { expr: "{ } [ ] ( )", valid: true },
+        { expr: "( ( ) [ { } ]", valid: false },
+        { expr: "{ [ [ ( ) ] ] }", valid: true },
+        { expr: "[ { ] }", valid: false },
+        { expr: "{ [ ( ) ] ( ) }", valid: true }
+    ];
+
+    function loadNextBracket(arena) {
+        const item = bracketList[Math.floor(Math.random() * bracketList.length)];
+        arena.innerHTML = `
+            <div class="text-center py-4">
+                <span class="badge bg-primary-subtle text-primary mb-2">Bracket Stack Balancer</span>
+                <p class="text-muted mb-3">Is this bracket sequence properly balanced and closed in stack order?</p>
+                <div class="display-3 fw-bold text-dark font-monospace my-4 p-3 bg-light rounded-3 border">
+                    ${item.expr}
+                </div>
+                <div class="d-flex justify-content-center gap-4 mt-4">
+                    <button class="btn btn-success btn-lg px-5 py-3 fs-3 fw-bold shadow" onclick="answerStack(${item.valid}, true)">
+                        <i class="bi bi-check-circle me-2"></i> BALANCED
+                    </button>
+                    <button class="btn btn-danger btn-lg px-5 py-3 fs-3 fw-bold shadow" onclick="answerStack(${item.valid}, false)">
+                        <i class="bi bi-x-circle me-2"></i> UNBALANCED
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function answerStack(actual, userChoice) {
+        if (actual === userChoice) {
+            currentScore += 15;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextBracket(document.getElementById('gameArenaBody'));
+    }
+
+    // 13. GIT COMMAND BLITZ
+    function startGitBlitz(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Git Blitz Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextGitQuestion(arena);
+    }
+
+    const gitScenarios = [
+        { scenario: "Undo the most recent commit but keep all modified code staged:", correct: "git reset --soft HEAD~1", options: ["git reset --soft HEAD~1", "git reset --hard HEAD~1", "git clean -fd", "git checkout -- ."] },
+        { scenario: "Apply a specific commit from another branch into your current branch:", correct: "git cherry-pick <commit-hash>", options: ["git cherry-pick <commit-hash>", "git merge --squash", "git rebase -i", "git branch -m"] },
+        { scenario: "Save uncommitted changes temporarily to get a clean working directory:", correct: "git stash", options: ["git stash", "git commit --amend", "git clean -f", "git revert HEAD"] },
+        { scenario: "Re-apply current branch commits on top of another base tip for linear history:", correct: "git rebase main", options: ["git rebase main", "git merge --no-ff", "git fetch --all", "git diff HEAD"] },
+        { scenario: "Modify the commit message of the very last unpushed commit:", correct: "git commit --amend -m '...'", options: ["git commit --amend -m '...'", "git reset --hard", "git reflog -m", "git revert -m"] },
+        { scenario: "Inspect commit history with one-line visual ASCII branch graphs:", correct: "git log --oneline --graph", options: ["git log --oneline --graph", "git status -s", "git show --stat", "git diff --name-only"] }
+    ];
+
+    function loadNextGitQuestion(arena) {
+        const q = gitScenarios[Math.floor(Math.random() * gitScenarios.length)];
+        const opts = [...q.options].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="py-2">
+                <span class="badge bg-dark text-white mb-2"><i class="bi bi-git me-1"></i> Git Command Blitz</span>
+                <h5 class="fw-bold text-dark mt-2 mb-3">${q.scenario}</h5>
+                <div class="row g-3">
+                    ${opts.map(opt => `
+                        <div class="col-sm-6">
+                            <button class="btn btn-outline-dark w-100 py-3 font-monospace fw-bold text-start fs-6" onclick="checkGitAnswer('${encodeURIComponent(opt)}', '${encodeURIComponent(q.correct)}')">
+                                ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkGitAnswer(chosen, correct) {
+        if (decodeURIComponent(chosen) === decodeURIComponent(correct)) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextGitQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 14. NUMBER SERIES DETECTIVE
+    function startNumberSeries(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Series Detective Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextSeriesQuestion(arena);
+    }
+
+    const seriesBank = [
+        { seq: "2, 4, 8, 16, ?", ans: 32, distractors: [30, 24, 64] },
+        { seq: "1, 1, 2, 3, 5, 8, ?", ans: 13, distractors: [11, 12, 15] },
+        { seq: "1, 4, 9, 16, 25, ?", ans: 36, distractors: [30, 35, 49] },
+        { seq: "3, 6, 11, 18, 27, ?", ans: 38, distractors: [36, 40, 42] },
+        { seq: "100, 95, 85, 70, ?", ans: 50, distractors: [55, 60, 45] },
+        { seq: "2, 3, 5, 7, 11, 13, ?", ans: 17, distractors: [15, 19, 16] },
+        { seq: "7, 14, 28, 56, ?", ans: 112, distractors: [102, 118, 124] },
+        { seq: "5, 10, 17, 26, ?", ans: 37, distractors: [35, 36, 38] }
+    ];
+
+    function loadNextSeriesQuestion(arena) {
+        const item = seriesBank[Math.floor(Math.random() * seriesBank.length)];
+        const opts = [item.ans, ...item.distractors].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-warning-subtle text-dark mb-2">Number Series Detective</span>
+                <p class="text-muted mb-2">Find the next number in the pattern:</p>
+                <div class="display-3 fw-bold text-dark font-monospace my-4">${item.seq}</div>
+                <div class="row g-3 justify-content-center">
+                    ${opts.map(opt => `
+                        <div class="col-sm-3 col-6">
+                            <button class="btn btn-outline-primary btn-lg w-100 py-3 fs-2 fw-bold" onclick="checkSeriesAnswer(${opt}, ${item.ans})">
+                                ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkSeriesAnswer(chosen, ans) {
+        if (chosen === ans) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextSeriesQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 15. PERCENTAGE & DISCOUNT HUSTLE
+    function startPercentageHustle(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Percentage Hustle Finished! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextPercentageQuestion(arena);
+    }
+
+    function loadNextPercentageQuestion(arena) {
+        const types = ['discount', 'pct_of', 'profit'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        let question = "", ans = 0, distractors = [];
+
+        if (type === 'discount') {
+            const price = (Math.floor(Math.random() * 8) + 2) * 100;
+            const pcts = [10, 20, 25, 50];
+            const pct = pcts[Math.floor(Math.random() * pcts.length)];
+            ans = price - (price * pct / 100);
+            question = `A course priced at ₹${price} has a ${pct}% discount. What is the final price?`;
+            distractors = [ans + 50, ans - 50, price - pct];
+        } else if (type === 'pct_of') {
+            const base = (Math.floor(Math.random() * 10) + 2) * 50;
+            const pct = (Math.floor(Math.random() * 4) + 1) * 10;
+            ans = (base * pct) / 100;
+            question = `What is ${pct}% of ${base}?`;
+            distractors = [ans + 10, ans - 10, ans + 25];
+        } else {
+            ans = 25;
+            question = `An item bought for ₹400 is sold for ₹500. What is the profit percentage?`;
+            distractors = [20, 15, 30];
+        }
+
+        const opts = [ans, ...distractors].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-info-subtle text-info mb-2">Percentage & Discount Hustle</span>
+                <h4 class="fw-bold my-4 text-dark">${question}</h4>
+                <div class="row g-3 justify-content-center">
+                    ${opts.map(opt => `
+                        <div class="col-sm-3 col-6">
+                            <button class="btn btn-outline-info btn-lg w-100 py-3 fs-3 fw-bold text-dark" onclick="checkPercentageAnswer(${opt}, ${ans})">
+                                ${type === 'profit' ? opt + '%' : (type === 'discount' ? '₹' + opt : opt)}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkPercentageAnswer(chosen, ans) {
+        if (chosen === ans) {
+            currentScore += 15;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextPercentageQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 16. PROBABILITY ODDS PREDICTOR
+    function startProbabilityDice(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Probability Odds Finished! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextProbabilityQuestion(arena);
+    }
+
+    const probQuestions = [
+        { q: "What is the probability of rolling a sum of 7 with two fair 6-sided dice?", ans: "1/6", options: ["1/6", "1/12", "5/36", "1/4"] },
+        { q: "What is the probability of rolling a sum greater than 10 with two dice?", ans: "1/12", options: ["1/12", "1/6", "1/9", "5/36"] },
+        { q: "A card is drawn from a 52-card deck. Probability of drawing an Ace?", ans: "1/13", options: ["1/13", "4/13", "1/52", "1/26"] },
+        { q: "Three fair coins are tossed. Probability of getting EXACTLY 2 heads?", ans: "3/8", options: ["3/8", "1/2", "1/4", "5/8"] },
+        { q: "A bag contains 5 Red, 3 Blue, and 2 Green balls. Probability of drawing Blue?", ans: "3/10", options: ["3/10", "1/5", "1/2", "3/8"] },
+        { q: "Probability of rolling an odd prime number (3 or 5) on a single 6-sided die?", ans: "1/3", options: ["1/3", "1/2", "2/3", "1/6"] }
+    ];
+
+    function loadNextProbabilityQuestion(arena) {
+        const item = probQuestions[Math.floor(Math.random() * probQuestions.length)];
+        const opts = [...item.options].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-secondary-subtle text-dark mb-2"><i class="bi bi-dice-5 me-1"></i> Probability Predictor</span>
+                <h4 class="fw-bold my-4 text-dark">${item.q}</h4>
+                <div class="row g-3 justify-content-center">
+                    ${opts.map(opt => `
+                        <div class="col-sm-3 col-6">
+                            <button class="btn btn-outline-secondary btn-lg w-100 py-3 fs-2 fw-bold" onclick="checkProbabilityAnswer('${opt}', '${item.ans}')">
+                                ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkProbabilityAnswer(chosen, ans) {
+        if (chosen === ans) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextProbabilityQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 17. SPEED ALGEBRA SOLVER
+    function startSpeedAlgebra(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Speed Algebra Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextAlgebraQuestion(arena);
+    }
+
+    function loadNextAlgebraQuestion(arena) {
+        const a = Math.floor(Math.random() * 6) + 2;
+        const x = Math.floor(Math.random() * 10) + 2;
+        const b = Math.floor(Math.random() * 15) + 3;
+        const isPlus = Math.random() > 0.5;
+        const c = isPlus ? (a * x + b) : (a * x - b);
+
+        const distractors = [x + 1, x - 1, x + 2].filter(d => d > 0);
+        const opts = [x, ...distractors].slice(0, 4).sort(() => 0.5 - Math.random());
+
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-danger-subtle text-danger mb-2">Speed Algebra Solver</span>
+                <p class="text-muted mb-2">Solve for the value of <strong>x</strong>:</p>
+                <div class="display-3 fw-bold text-dark font-monospace my-4">
+                    ${a}x ${isPlus ? '+' : '-'} ${b} = ${c}
+                </div>
+                <div class="row g-3 justify-content-center">
+                    ${opts.map(opt => `
+                        <div class="col-sm-3 col-6">
+                            <button class="btn btn-outline-danger btn-lg w-100 py-3 fs-2 fw-bold" onclick="checkAlgebraAnswer(${opt}, ${x})">
+                                x = ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkAlgebraAnswer(chosen, correct) {
+        if (chosen === correct) {
+            currentScore += 15;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextAlgebraQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 18. TIME & WORK RAPID ESTIMATOR
+    function startTimeAndWork(arena) {
+        timeLeft = 45;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Time & Work Challenge Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+        loadNextWorkQuestion(arena);
+    }
+
+    const workQuestions = [
+        { q: "A finishes a project in 10 days, and B in 15 days. Working together, how many days do they take?", ans: "6 days", options: ["6 days", "5 days", "8 days", "12 days"] },
+        { q: "A can complete work in 12 days, and B in 24 days. How many days if they work together?", ans: "8 days", options: ["8 days", "6 days", "10 days", "16 days"] },
+        { q: "Pipe A fills a tank in 20 hours, and Pipe B fills it in 30 hours. Both pipes open together fill it in:", ans: "12 hrs", options: ["12 hrs", "10 hrs", "15 hrs", "25 hrs"] },
+        { q: "A works twice as fast as B. If B takes 12 days alone, how many days will both take together?", ans: "4 days", options: ["4 days", "3 days", "6 days", "8 days"] },
+        { q: "8 workers finish a task in 15 days. How many days will 12 workers take at the same pace?", ans: "10 days", options: ["10 days", "8 days", "12 days", "14 days"] },
+        { q: "A and B together finish in 6 days. A alone takes 10 days. How many days will B take alone?", ans: "15 days", options: ["15 days", "12 days", "18 days", "20 days"] }
+    ];
+
+    function loadNextWorkQuestion(arena) {
+        const item = workQuestions[Math.floor(Math.random() * workQuestions.length)];
+        const opts = [...item.options].sort(() => 0.5 - Math.random());
+        arena.innerHTML = `
+            <div class="text-center py-3">
+                <span class="badge bg-success-subtle text-success mb-2"><i class="bi bi-stopwatch me-1"></i> Time & Work Rapid Estimator</span>
+                <h4 class="fw-bold my-4 text-dark">${item.q}</h4>
+                <div class="row g-3 justify-content-center">
+                    ${opts.map(opt => `
+                        <div class="col-sm-3 col-6">
+                            <button class="btn btn-outline-success btn-lg w-100 py-3 fs-3 fw-bold" onclick="checkWorkAnswer('${opt}', '${item.ans}')">
+                                ${opt}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function checkWorkAnswer(chosen, ans) {
+        if (chosen === ans) {
+            currentScore += 20;
+            document.getElementById('gameScore').innerText = currentScore;
+        }
+        loadNextWorkQuestion(document.getElementById('gameArenaBody'));
+    }
+
+    // 19. 2048 BYTE EDITION
+    let board2048 = [];
+    function startBytes2048(arena) {
+        timeLeft = 90;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("2048 Session Over! Final Score: " + currentScore);
+            }
+        }, 1000);
+
+        board2048 = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+        ];
+        spawnTile2048();
+        spawnTile2048();
+        render2048(arena);
+
+        if (window._key2048Handler) {
+            window.removeEventListener('keydown', window._key2048Handler);
+        }
+        window._key2048Handler = function(e) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                move2048(e.key.replace('Arrow', '').toLowerCase());
+            }
+        };
+        window.addEventListener('keydown', window._key2048Handler);
+    }
+
+    function spawnTile2048() {
+        const empties = [];
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                if (board2048[r][c] === 0) empties.push({r, c});
+            }
+        }
+        if (empties.length > 0) {
+            const spot = empties[Math.floor(Math.random() * empties.length)];
+            board2048[spot.r][spot.c] = Math.random() < 0.8 ? 2 : 4;
+        }
+    }
+
+    const byteLabels = {
+        0: '', 2: '2 B', 4: '4 B', 8: '8 B', 16: '16 B', 32: '32 B',
+        64: '64 B', 128: '128 B', 256: '256 B', 512: '512 B', 1024: '1 KB', 2048: '2 KB'
+    };
+
+    function render2048(arena) {
+        let gridHtml = '';
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                const val = board2048[r][c];
+                const label = byteLabels[val] || (val ? val + ' B' : '');
+                const bg = val === 0 ? '#f1f5f9' : (val <= 8 ? '#e0f2fe' : (val <= 64 ? '#fed7aa' : (val <= 512 ? '#fecaca' : '#a7f3d0')));
+                const textColor = val > 64 ? '#991b1b' : (val > 0 ? '#0f172a' : '#cbd5e1');
+                gridHtml += `
+                    <div style="background:${bg};color:${textColor};display:flex;align-items:center;justify-content:center;height:65px;border-radius:8px;font-weight:bold;font-size:1.15rem;font-family:monospace;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">
+                        ${label}
+                    </div>
+                `;
+            }
+        }
+
+        arena.innerHTML = `
+            <div class="text-center py-2">
+                <span class="badge bg-warning-subtle text-dark mb-2"><i class="bi bi-grid-3x3 me-1"></i> 2048 Byte Edition</span>
+                <p class="text-muted small mb-2">Use Arrow Keys or On-Screen Buttons to slide & merge memory bytes!</p>
+                <div style="max-width:320px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#e2e8f0;padding:10px;border-radius:12px;" class="mb-3">
+                    ${gridHtml}
+                </div>
+                <div class="d-flex justify-content-center gap-2 mb-2">
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" onclick="move2048('up')"><i class="bi bi-arrow-up"></i></button>
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" onclick="move2048('left')"><i class="bi bi-arrow-left"></i></button>
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" onclick="move2048('down')"><i class="bi bi-arrow-down"></i></button>
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" onclick="move2048('right')"><i class="bi bi-arrow-right"></i></button>
+                </div>
+            </div>
+        `;
+    }
+
+    function slideRow(row) {
+        let arr = row.filter(val => val !== 0);
+        for (let i = 0; i < arr.length - 1; i++) {
+            if (arr[i] === arr[i + 1]) {
+                arr[i] *= 2;
+                currentScore += arr[i];
+                document.getElementById('gameScore').innerText = currentScore;
+                arr[i + 1] = 0;
+            }
+        }
+        arr = arr.filter(val => val !== 0);
+        while (arr.length < 4) arr.push(0);
+        return arr;
+    }
+
+    function move2048(direction) {
+        const oldStr = JSON.stringify(board2048);
+        if (direction === 'left') {
+            for (let r = 0; r < 4; r++) board2048[r] = slideRow(board2048[r]);
+        } else if (direction === 'right') {
+            for (let r = 0; r < 4; r++) board2048[r] = slideRow(board2048[r].reverse()).reverse();
+        } else if (direction === 'up') {
+            for (let c = 0; c < 4; c++) {
+                let col = [board2048[0][c], board2048[1][c], board2048[2][c], board2048[3][c]];
+                col = slideRow(col);
+                for (let r = 0; r < 4; r++) board2048[r][c] = col[r];
+            }
+        } else if (direction === 'down') {
+            for (let c = 0; c < 4; c++) {
+                let col = [board2048[3][c], board2048[2][c], board2048[1][c], board2048[0][c]];
+                col = slideRow(col);
+                for (let r = 0; r < 4; r++) board2048[3 - r][c] = col[r];
+            }
+        }
+        if (oldStr !== JSON.stringify(board2048)) {
+            spawnTile2048();
+            render2048(document.getElementById('gameArenaBody'));
+        }
+    }
+
+    // 20. DATA STRUCTURES MEMORY MATCH
+    let memoryCards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+
+    function startMemoryMatrix(arena) {
+        timeLeft = 50;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Memory Match Done! Final Score: " + currentScore);
+            }
+        }, 1000);
+
+        initMemoryBoard(arena);
+    }
+
+    function initMemoryBoard(arena) {
+        matchedPairs = 0;
+        flippedCards = [];
+        const rawPairs = [
+            { id: 1, text: "Array Index Lookup" },
+            { id: 1, text: "O(1) Time" },
+            { id: 2, text: "Binary Search Tree" },
+            { id: 2, text: "O(log N) Time" },
+            { id: 3, text: "Hash Table Average" },
+            { id: 3, text: "O(1) Avg Time" },
+            { id: 4, text: "Merge Sort Worst" },
+            { id: 4, text: "O(N log N) Time" }
+        ];
+        memoryCards = rawPairs.map((p, idx) => ({ ...p, cardIndex: idx, isFlipped: false, isMatched: false }))
+                              .sort(() => 0.5 - Math.random());
+        renderMemoryMatrix(arena);
+    }
+
+    function renderMemoryMatrix(arena) {
+        let cardsHtml = memoryCards.map(c => `
+            <div class="col-3">
+                <button class="btn w-100 py-4 fw-bold fs-6 shadow-sm border ${c.isMatched ? 'btn-success' : (c.isFlipped ? 'btn-primary' : 'btn-light')}"
+                        style="min-height:90px;word-break:break-word;"
+                        onclick="flipMemoryCard(${c.cardIndex})" ${c.isMatched || c.isFlipped ? 'disabled' : ''}>
+                    ${c.isFlipped || c.isMatched ? c.text : '<i class="bi bi-question-lg fs-3 text-muted"></i>'}
+                </button>
+            </div>
+        `).join('');
+
+        arena.innerHTML = `
+            <div class="text-center py-2">
+                <span class="badge bg-success-subtle text-success mb-2"><i class="bi bi-diagram-3 me-1"></i> Data Structures Memory Match</span>
+                <p class="text-muted small mb-3">Flip cards to match Data Structures with their Time Complexities!</p>
+                <div class="row g-3 justify-content-center mb-3">
+                    ${cardsHtml}
+                </div>
+                <div class="text-muted small">Pairs Found: <strong class="text-success">${matchedPairs}</strong> / 4</div>
+            </div>
+        `;
+    }
+
+    function flipMemoryCard(cardIndex) {
+        if (flippedCards.length >= 2) return;
+        const card = memoryCards.find(c => c.cardIndex === cardIndex);
+        if (!card || card.isFlipped || card.isMatched) return;
+
+        card.isFlipped = true;
+        flippedCards.push(card);
+        renderMemoryMatrix(document.getElementById('gameArenaBody'));
+
+        if (flippedCards.length === 2) {
+            const [c1, c2] = flippedCards;
+            if (c1.id === c2.id) {
+                c1.isMatched = true;
+                c2.isMatched = true;
+                matchedPairs++;
+                currentScore += 25;
+                document.getElementById('gameScore').innerText = currentScore;
+                flippedCards = [];
+                renderMemoryMatrix(document.getElementById('gameArenaBody'));
+                if (matchedPairs === 4) {
+                    currentScore += 20;
+                    document.getElementById('gameScore').innerText = currentScore;
+                    setTimeout(() => {
+                        initMemoryBoard(document.getElementById('gameArenaBody'));
+                    }, 1200);
+                }
+            } else {
+                setTimeout(() => {
+                    c1.isFlipped = false;
+                    c2.isFlipped = false;
+                    flippedCards = [];
+                    renderMemoryMatrix(document.getElementById('gameArenaBody'));
+                }, 800);
+            }
+        }
+    }
+
+    // 21. TOWER OF HANOI
+    let hanoiPegs = { A: [3, 2, 1], B: [], C: [] };
+    let hanoiMoves = 0;
+    let selectedPeg = null;
+
+    function startTowerOfHanoi(arena) {
+        timeLeft = 75;
+        document.getElementById('gameTimer').innerText = timeLeft;
+        gameTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                stopCurrentGame();
+                finishGame("Hanoi Challenge Finished! Moves made: " + hanoiMoves);
+            }
+        }, 1000);
+
+        hanoiPegs = { A: [3, 2, 1], B: [], C: [] };
+        hanoiMoves = 0;
+        selectedPeg = null;
+        renderHanoi(arena);
+    }
+
+    function renderHanoi(arena, errorMsg = '') {
+        const diskColors = { 1: '#06b6d4', 2: '#f59e0b', 3: '#4f46e5' };
+
+        function renderPegDisks(pegKey) {
+            const disks = hanoiPegs[pegKey];
+            let html = '<div style="height:140px;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;position:relative;">';
+            html += '<div style="position:absolute;bottom:0;width:8px;height:120px;background:#94a3b8;border-radius:4px;z-index:1;"></div>';
+            disks.forEach(d => {
+                const width = d === 1 ? '70px' : (d === 2 ? '110px' : '150px');
+                html += `<div style="width:${width};height:24px;background:${diskColors[d]};color:white;font-weight:bold;font-size:0.75rem;border-radius:6px;display:flex;align-items:center;justify-content:center;z-index:2;margin-bottom:4px;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${d}</div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        arena.innerHTML = `
+            <div class="text-center py-2">
+                <span class="badge bg-info-subtle text-info mb-2"><i class="bi bi-bar-chart-steps me-1"></i> Tower of Hanoi</span>
+                <p class="text-muted small mb-2">Move all 3 disks from <strong>Peg A</strong> to <strong>Peg C</strong>. Cannot place a larger disk on a smaller one!</p>
+                ${errorMsg ? `<div class="alert alert-danger py-2 small mb-2">${errorMsg}</div>` : ''}
+                <div class="row g-3 justify-content-center my-3">
+                    ${['A', 'B', 'C'].map(peg => `
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 border ${selectedPeg === peg ? 'border-primary border-3 bg-primary-subtle' : 'bg-light'}" style="cursor:pointer;" onclick="clickHanoiPeg('${peg}')">
+                                ${renderPegDisks(peg)}
+                                <div style="height:8px;background:#475569;border-radius:4px;margin-top:4px;"></div>
+                                <button class="btn btn-sm ${selectedPeg === peg ? 'btn-primary' : 'btn-outline-dark'} w-100 mt-2 fw-bold">
+                                    ${selectedPeg === peg ? 'SELECTED' : 'Peg ' + peg}
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="d-flex justify-content-center gap-4 text-muted small">
+                    <span>Moves: <strong class="text-primary">${hanoiMoves}</strong> (Optimal: 7)</span>
+                    <span>Target: <strong>Peg C</strong></span>
+                </div>
+            </div>
+        `;
+    }
+
+    function clickHanoiPeg(peg) {
+        if (!selectedPeg) {
+            if (hanoiPegs[peg].length === 0) {
+                renderHanoi(document.getElementById('gameArenaBody'), 'Peg ' + peg + ' has no disks to move!');
+                return;
+            }
+            selectedPeg = peg;
+            renderHanoi(document.getElementById('gameArenaBody'));
+        } else {
+            if (selectedPeg === peg) {
+                selectedPeg = null;
+                renderHanoi(document.getElementById('gameArenaBody'));
+                return;
+            }
+            const srcDisks = hanoiPegs[selectedPeg];
+            const destDisks = hanoiPegs[peg];
+            const diskToMove = srcDisks[srcDisks.length - 1];
+            const topDestDisk = destDisks.length > 0 ? destDisks[destDisks.length - 1] : 999;
+
+            if (diskToMove > topDestDisk) {
+                renderHanoi(document.getElementById('gameArenaBody'), 'Invalid Move: Cannot place Disk ' + diskToMove + ' on smaller Disk ' + topDestDisk + '!');
+                selectedPeg = null;
+                return;
+            }
+
+            srcDisks.pop();
+            destDisks.push(diskToMove);
+            hanoiMoves++;
+            selectedPeg = null;
+
+            if (hanoiPegs.C.length === 3) {
+                stopCurrentGame();
+                const bonus = Math.max(20, 100 - (hanoiMoves - 7) * 10);
+                currentScore += bonus;
+                document.getElementById('gameScore').innerText = currentScore;
+                finishGame(`🎉 TOWER SOLVED in ${hanoiMoves} moves! Optimal is 7! Points Earned: ${bonus}`);
+                return;
+            }
+            renderHanoi(document.getElementById('gameArenaBody'));
+        }
+    }
+
+    function finishGame(message) {
+        const arena = document.getElementById('gameArenaBody');
+        arena.innerHTML = `
+            <div class="text-center py-4">
+                <div class="rounded-circle bg-success-subtle text-success p-3 d-inline-flex mb-3">
+                    <i class="bi bi-award-fill fs-1 motion-sparkle"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-2">${message}</h3>
+                <p class="text-muted mb-4">Great mental workout! Your mind is refreshed and ready for career preparation.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-outline-primary" onclick="restartCurrentGame()">Play Again</button>
+                    <button class="btn btn-pulse-primary" data-bs-dismiss="modal">Back to Games Hub</button>
+                </div>
+            </div>
+        `;
+
+        // Send score to backend
+        fetch("{{ url_for('games.log_score') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ game_title: activeGameTitle, score: currentScore })
+        }).catch(err => console.log(err));
+    }
+</script>
+{% endblock %}

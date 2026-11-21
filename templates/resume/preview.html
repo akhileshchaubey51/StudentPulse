@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume - {{ profile.user.full_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #E9ECEF; font-family: "Georgia", "Times New Roman", serif; color: #212529; }
+        .resume-page {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #FFFFFF;
+            padding: 3rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .resume-header { border-bottom: 2px solid #2DBE65; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .resume-section-title {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2DBE65;
+            font-weight: 700;
+            border-bottom: 1px solid #DEE2E6;
+            padding-bottom: 0.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        @media print {
+            body { background: #FFFFFF; margin: 0; }
+            .resume-page { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="text-center py-3 no-print">
+        <button onclick="window.print()" class="btn btn-success fw-bold px-4">
+            <i class="bi bi-printer"></i> Print / Save as PDF
+        </button>
+    </div>
+
+    <div class="resume-page">
+        <!-- Header -->
+        <div class="resume-header text-center">
+            <h2 class="fw-bold mb-1" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">{{ profile.user.full_name }}</h2>
+            <div class="small text-muted">
+                {{ profile.user.email }} &bull; {{ profile.user.phone or '+1 (555) 019-2834' }} &bull; {{ profile.enrollment_number }}
+                {% if profile.github_url %}&bull; <a href="{{ profile.github_url }}" class="text-dark">{{ profile.github_url }}</a>{% endif %}
+                {% if profile.linkedin_url %}&bull; <a href="{{ profile.linkedin_url }}" class="text-dark">{{ profile.linkedin_url }}</a>{% endif %}
+            </div>
+        </div>
+
+        <!-- Summary -->
+        {% if resume.summary %}
+            <div class="resume-section-title">Career Objective & Summary</div>
+            <p class="small text-secondary mb-3" style="line-height: 1.6;">{{ resume.summary }}</p>
+        {% endif %}
+
+        <!-- Education -->
+        <div class="resume-section-title">Education</div>
+        <div class="d-flex justify-content-between align-items-baseline mb-1">
+            <strong>{{ profile.college }} ({{ profile.university }})</strong>
+            <span class="small text-muted">{{ profile.graduation_year }}</span>
+        </div>
+        <div class="d-flex justify-content-between small text-secondary">
+            <span>{{ profile.course }} in {{ profile.department }} &bull; Semester {{ profile.semester }}</span>
+            <span>Cumulative GPA: <strong>{{ profile.cgpa }} / 10.0</strong></span>
+        </div>
+
+        <!-- Technical Skills -->
+        <div class="resume-section-title">Technical Skills</div>
+        <div class="small text-secondary mb-3" style="line-height: 1.8;">
+            <strong>Core Competencies:</strong>
+            {% for s in skills %}
+                {{ s.skill.name }} ({{ s.proficiency }}){% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Projects -->
+        {% if projects %}
+            <div class="resume-section-title">Technical & Capstone Projects</div>
+            {% for p in projects %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <strong>{{ p.title }}</strong>
+                        <span class="small text-muted">{{ p.category }}</span>
+                    </div>
+                    <div class="small text-muted mb-1"><em>Technologies: {{ p.tech_stack }}</em></div>
+                    <p class="small text-secondary mb-0" style="line-height: 1.5;">{{ p.description }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Certifications -->
+        {% if resume.get_certifications() %}
+            <div class="resume-section-title">Certifications</div>
+            <ul class="small text-secondary mb-3 ps-3">
+                {% for c in resume.get_certifications() %}
+                    <li>{{ c }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Honors & Achievements -->
+        {% if resume.get_achievements() %}
+            <div class="resume-section-title">Honors & Extracurricular Achievements</div>
+            <ul class="small text-secondary mb-0 ps-3">
+                {% for a in resume.get_achievements() %}
+                    <li>{{ a }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</body>
+</html>

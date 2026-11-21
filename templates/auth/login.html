@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Student Pulse & KIET Portal</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom Stylesheet with Cache Busting -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8.0">
+    <style>
+        :root {
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --cyan-primary: #00C0FF;
+            --teal-accent: #00D2B4;
+            --gradient-cyan: linear-gradient(135deg, #00C0FF 0%, #00D2B4 100%);
+            --gradient-cyan-hover: linear-gradient(135deg, #00A6DF 0%, #00B69B 100%);
+        }
+
+        body {
+            background-color: #E6F5F8;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 192, 255, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 210, 180, 0.12) 0px, transparent 50%),
+                radial-gradient(#D3E8EE 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 24px 24px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            font-family: var(--font-main);
+            color: #333;
+        }
+
+        /* Outer Card Frame */
+        .split-auth-card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px -15px rgba(0, 80, 120, 0.15), 0 0 0 1px rgba(0, 192, 255, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            min-height: 600px;
+            position: relative;
+        }
+
+        /* Left Side: Curved Cyan Panel (from uploaded design) */
+        .welcome-panel {
+            background: var(--gradient-cyan);
+            flex: 0 0 45%;
+            padding: 3.5rem 2.5rem;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            border-top-right-radius: 90px;
+            border-bottom-right-radius: 90px;
+            overflow: hidden;
+        }
+
+        .welcome-panel::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .welcome-title {
+            font-size: 2.35rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+            color: #FFFFFF;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.05rem;
+            opacity: 0.92;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .btn-welcome-register {
+            border: 2px solid #FFFFFF;
+            color: #FFFFFF;
+            background: transparent;
+            font-weight: 700;
+            padding: 0.65rem 2.5rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-welcome-register:hover {
+            background: #FFFFFF;
+            color: #00A6DF;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Right Side: Form Box (.form-box from uploaded snippet) */
+        .form-box {
+            flex: 0 0 55%;
+            background: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2.5rem 3rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Interactive Yeti Mascot atop Form */
+        .yeti-header-wrap {
+            width: 140px;
+            height: 95px;
+            margin: 0 auto -10px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .yeti-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 6px 12px rgba(0, 80, 120, 0.12));
+        }
+
+        .yeti-pupil {
+            transition: transform 0.15s ease-out;
+            transform-origin: center;
+        }
+
+        .yeti-hand {
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+            transform-origin: bottom center;
+        }
+
+        .yeti-hand-left {
+            transform: translateY(60px) translateX(-10px) scale(0.6);
+            opacity: 0;
+        }
+        .yeti-hand-right {
+            transform: translateY(60px) translateX(10px) scale(0.6);
+            opacity: 0;
+        }
+
+        .yeti-container.cover-eyes .yeti-hand-left,
+        .yeti-container.cover-eyes .yeti-hand-right {
+            transform: translateY(0px) translateX(0px) scale(1);
+            opacity: 1;
+        }
+
+        .yeti-container.peeking .yeti-hand-right {
+            transform: translateY(18px) translateX(8px) scale(0.92) rotate(12deg);
+            opacity: 1;
+        }
+
+        .yeti-container.look-down .yeti-pupil {
+            transform: translateY(5px);
+        }
+
+        .yeti-container.curious .yeti-pupil {
+            transform: translateY(-2px) translateX(4px);
+        }
+
+        .form-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #222222;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .auth-pill-input {
+            background: #F4F6F8 !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 999px !important;
+            padding: 0.75rem 1.25rem !important;
+            font-size: 1rem !important;
+            color: #1A202C !important;
+            transition: all 0.2s ease;
+        }
+
+        .auth-pill-input:focus {
+            background: #FFFFFF !important;
+            border-color: var(--cyan-primary) !important;
+            box-shadow: 0 0 0 3px rgba(0, 192, 255, 0.2) !important;
+        }
+
+        .input-icon-pill {
+            background: #F4F6F8;
+            border: 1px solid #E2E8F0;
+            border-right: none;
+            border-top-left-radius: 999px;
+            border-bottom-left-radius: 999px;
+            padding-left: 1.25rem;
+            color: #718096;
+        }
+
+        .auth-pill-input.with-icon {
+            border-left: none !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+        }
+
+        .btn-cyan-gradient {
+            background: var(--gradient-cyan);
+            border: none;
+            color: #FFFFFF;
+            font-weight: 700;
+            padding: 0.8rem;
+            border-radius: 999px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(0, 192, 255, 0.35);
+            transition: all 0.25s ease;
+            width: 100%;
+        }
+
+        .btn-cyan-gradient:hover {
+            background: var(--gradient-cyan-hover);
+            color: #FFFFFF;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 192, 255, 0.45);
+        }
+
+        .social-pill-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            color: #4A5568;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .social-pill-btn:hover {
+            border-color: var(--cyan-primary);
+            color: var(--cyan-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 192, 255, 0.18);
+        }
+
+        .captcha-pill {
+            background: #E6F8FC;
+            border: 1px dashed var(--cyan-primary);
+            color: #0088B5;
+            font-family: monospace;
+            font-size: 1.15rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes tearDropFall {
+            0% { transform: translateY(0) scale(0.6); opacity: 0; }
+            30% { opacity: 1; }
+            100% { transform: translateY(18px) scale(1.1); opacity: 0; }
+        }
+        .tear-drop {
+            animation: tearDropFall 1.2s infinite ease-in;
+        }
+        .tear-drop:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+        @keyframes bounceEmoji {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15) translateY(-4px); }
+        }
+        .animate-bounce {
+            animation: bounceEmoji 0.6s infinite alternate ease-in-out;
+        }
+        @keyframes shakeForm {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shakeForm 0.5s ease-in-out;
+        }
+        .auth-status-banner {
+            border-radius: 16px;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 820px) {
+            .split-auth-card {
+                flex-direction: column;
+            }
+            .welcome-panel {
+                border-radius: 28px 28px 60px 60px;
+                padding: 2.5rem 1.5rem;
+            }
+            .form-box {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="split-auth-card">
+        <!-- Left Side: Vibrant Curved Cyan Welcome Panel -->
+        <div class="welcome-panel">
+            <img src="{{ url_for('static', filename='img/student-pulse-logo.svg') }}" alt="Student Pulse" style="width: 64px; height: 64px; margin-bottom: 1.25rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18));">
+            <div class="welcome-title">Hello, Welcome</div>
+            <div class="welcome-subtitle">
+                Official Student Pulse Career & Placement Platform for <strong>KIET</strong>
+            </div>
+            <p class="text-white opacity-75 small mb-4" style="max-width: 280px; line-height: 1.6;">
+                Don't have an Account? Join your university portal with your KIET student credentials.
+            </p>
+            <a href="{{ url_for('auth.register') }}" class="btn-welcome-register">
+                Register
+            </a>
+
+            <!-- Subtle Institutional Seal -->
+            <div class="mt-4 pt-3 opacity-75 small d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check fs-5"></i> KIET Institutional Security
+            </div>
+        </div>
+
+        <!-- Right Side: Form Box (.form-box from uploaded design) -->
+        <div class="form-box">
+            <!-- Interactive Yeti Mascot -->
+            <div class="yeti-header-wrap yeti-container" id="yetiContainer">
+                <svg class="yeti-svg" viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="yetiFur" cx="50%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#E8F6FC"/>
+                            <stop offset="100%" stop-color="#BEE3F8"/>
+                        </radialGradient>
+                        <radialGradient id="yetiFace" cx="50%" cy="45%" r="55%">
+                            <stop offset="0%" stop-color="#DDF0FB"/>
+                            <stop offset="100%" stop-color="#90CDF4"/>
+                        </radialGradient>
+                    </defs>
+                    <circle cx="48" cy="58" r="16" fill="url(#yetiFur)"/>
+                    <circle cx="48" cy="58" r="9" fill="#FEB2B2"/>
+                    <circle cx="152" cy="58" r="16" fill="url(#yetiFur)"/>
+                    <circle cx="152" cy="58" r="9" fill="#FEB2B2"/>
+                    <ellipse cx="100" cy="80" rx="60" ry="52" fill="url(#yetiFur)"/>
+                    <ellipse cx="100" cy="83" rx="42" ry="34" fill="url(#yetiFace)"/>
+                    <ellipse cx="82" cy="78" rx="12" ry="14" fill="#FFFFFF" stroke="#63B3ED" stroke-width="1.5"/>
+                    <ellipse class="yeti-pupil" id="pupilLeft" cx="82" cy="78" rx="5.5" ry="6.5" fill="#1A202C"/>
+                    <circle cx="80" cy="75" r="2" fill="#FFFFFF"/>
+                    <ellipse cx="118" cy="78" rx="12" ry="14" fill="#FFFFFF" stroke="#63B3ED" stroke-width="1.5"/>
+                    <ellipse class="yeti-pupil" id="pupilRight" cx="118" cy="78" rx="5.5" ry="6.5" fill="#1A202C"/>
+                    <circle cx="116" cy="75" r="2" fill="#FFFFFF"/>
+                    <path d="M 94 90 Q 100 87 106 90 Q 100 96 94 90 Z" fill="#2B6CB0"/>
+                    <path id="yetiMouth" d="M 92 100 Q 100 108 108 100" stroke="#2D3748" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    
+                    <!-- Crying Teardrops for Invalid Login -->
+                    <g id="yetiTears" style="display: none;">
+                        <ellipse class="tear-drop" cx="82" cy="94" rx="3.5" ry="5.5" fill="#00C0FF"/>
+                        <ellipse class="tear-drop" cx="118" cy="94" rx="3.5" ry="5.5" fill="#00C0FF"/>
+                    </g>
+                    <!-- Happy Cheeks for Successful Login -->
+                    <g id="yetiBlush" style="display: none;">
+                        <ellipse cx="68" cy="85" rx="7" ry="4" fill="#FF8BA7" opacity="0.6"/>
+                        <ellipse cx="132" cy="85" rx="7" ry="4" fill="#FF8BA7" opacity="0.6"/>
+                    </g>
+                    
+                    <g class="yeti-hand yeti-hand-left" id="yetiHandLeft">
+                        <path d="M 40 140 Q 60 85 80 75 Q 90 90 68 140 Z" fill="url(#yetiFur)"/>
+                        <circle cx="80" cy="77" r="15" fill="#DDF0FB" stroke="#90CDF4" stroke-width="2"/>
+                        <circle cx="75" cy="72" r="3.5" fill="#90CDF4"/>
+                        <circle cx="81" cy="69" r="3.5" fill="#90CDF4"/>
+                        <circle cx="87" cy="72" r="3.5" fill="#90CDF4"/>
+                    </g>
+                    <g class="yeti-hand yeti-hand-right" id="yetiHandRight">
+                        <path d="M 160 140 Q 140 85 120 75 Q 110 90 132 140 Z" fill="url(#yetiFur)"/>
+                        <circle cx="120" cy="77" r="15" fill="#DDF0FB" stroke="#90CDF4" stroke-width="2"/>
+                        <circle cx="113" cy="72" r="3.5" fill="#90CDF4"/>
+                        <circle cx="119" cy="69" r="3.5" fill="#90CDF4"/>
+                        <circle cx="125" cy="72" r="3.5" fill="#90CDF4"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="form-title">Login</div>
+
+            <!-- Dynamic Login Feedback (Happy / Crying Emoji) -->
+            <div id="loginFeedback"></div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-3" id="flashMessagesContainer">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show border-0 py-2 small d-flex align-items-center gap-2" role="alert">
+                                {% if category == 'danger' %}
+                                    <span style="font-size: 1.4rem;">😭</span>
+                                {% elif category == 'success' %}
+                                    <span style="font-size: 1.4rem;">😊</span>
+                                {% else %}
+                                    <span style="font-size: 1.2rem;">ℹ️</span>
+                                {% endif %}
+                                <div class="flex-grow-1">{{ message }}</div>
+                                <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+                <!-- 1. Username / Email (Pill style matching design) -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-pill"><i class="bi bi-person-fill"></i></span>
+                        <input type="text" id="emailInput" name="email" class="form-control auth-pill-input with-icon" placeholder="Username or Email (@kiet.edu)" required autofocus>
+                    </div>
+                </div>
+
+                <!-- 2. Password with Lock Icon & Peek -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-pill"><i class="bi bi-lock-fill"></i></span>
+                        <input type="password" id="passwordInput" name="password" class="form-control auth-pill-input with-icon border-end-0" placeholder="Password" required>
+                        <button type="button" class="btn btn-outline-secondary border border-start-0 text-muted" style="border-top-right-radius:999px;border-bottom-right-radius:999px;background:#F4F6F8;" id="btnTogglePeek">
+                            <i class="bi bi-eye" id="peekIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Security Captcha (Clean pill alignment) -->
+                <div class="mb-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-5">
+                            <div class="captcha-pill">
+                                {{ captcha_question or '8 + 6 = ?' }}
+                            </div>
+                        </div>
+                        <div class="col-7">
+                            <input type="number" id="captchaInput" name="captcha" class="form-control auth-pill-input text-center fw-bold" placeholder="Captcha Answer" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                    <div class="form-check">
+                        <input type="checkbox" name="remember" class="form-check-input" id="rememberMe" checked>
+                        <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+                    </div>
+                    <a href="#" class="small text-muted text-decoration-none" onclick="alert('Please contact your KIET administrator to reset institutional credentials.');">Forgot Password</a>
+                </div>
+
+                <!-- Cyan Gradient Login Button (Matching Image) -->
+                <button type="submit" class="btn-cyan-gradient mb-3">
+                    Login
+                </button>
+            </form>
+
+            <!-- Special Platforms Login (@kiet.edu) -->
+            <div class="text-center mt-3">
+                <span class="small text-muted d-block mb-2 fw-semibold">
+                    <i class="bi bi-shield-lock-fill text-primary me-1"></i>or login with Special Platforms (@kiet.edu)
+                </span>
+                <div class="d-flex justify-content-center gap-2 mb-2">
+                    <button type="button" class="social-pill-btn shadow-sm" title="Google Workspace for Education (@kiet.edu)" onclick="openSsoModal('google')">
+                        <i class="bi bi-google text-danger fs-5"></i>
+                    </button>
+                    <button type="button" class="social-pill-btn shadow-sm" title="KIET Institutional ERP Portal (@kiet.edu)" onclick="openSsoModal('kiet')">
+                        <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+                    </button>
+                    <button type="button" class="social-pill-btn shadow-sm" title="Microsoft 365 Campus SSO (@kiet.edu)" onclick="openSsoModal('microsoft')">
+                        <i class="bi bi-microsoft text-info fs-5"></i>
+                    </button>
+                    <button type="button" class="social-pill-btn shadow-sm" title="GitHub Student Developer Pack (@kiet.edu)" onclick="openSsoModal('github')">
+                        <i class="bi bi-github text-dark fs-5"></i>
+                    </button>
+                </div>
+                <!-- Quick Role Autofill Helpers -->
+                <div class="d-flex justify-content-center gap-1 mt-2">
+                    <button type="button" class="btn btn-sm btn-light border py-0 px-2 small text-muted" onclick="fillRole('2628mca0206@kiet.edu', 'Student@123')">Student</button>
+                    <button type="button" class="btn btn-sm btn-light border py-0 px-2 small text-muted" onclick="fillRole('staff@kiet.edu', 'Staff@123')">Staff</button>
+                    <button type="button" class="btn btn-sm btn-light border py-0 px-2 small text-muted" onclick="fillRole('admin@kiet.edu', 'Admin@123')">Admin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Special Platform SSO Modal -->
+    <div class="modal fade" id="ssoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-light border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div id="ssoProviderIcon" class="fs-4"></div>
+                        <h5 class="modal-title fw-bold" id="ssoModalTitle">Special Platform Login</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-info-circle-fill fs-5"></i>
+                        <div>Institutional Security: Login is permitted only for official <strong>@kiet.edu</strong> email addresses.</div>
+                    </div>
+
+                    <div id="ssoFeedback" class="mb-3"></div>
+
+                    <form id="ssoForm" onsubmit="submitSsoLogin(event)">
+                        <input type="hidden" id="ssoProviderInput" value="google">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">KIET Institutional Email (@kiet.edu)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-envelope-at-fill text-primary"></i></span>
+                                <input type="email" id="ssoEmailInput" class="form-control" value="2628mca0206@kiet.edu" placeholder="yourid@kiet.edu" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-cyan-gradient w-100 py-2 fs-6 fw-bold" id="btnSsoSubmit">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Continue with Special Platform
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Interactive Yeti Mascot Eye-Covering & Tracking Reactions -->
+    <script>
+        const yeti = document.getElementById('yetiContainer');
+        const pupilLeft = document.getElementById('pupilLeft');
+        const pupilRight = document.getElementById('pupilRight');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const captchaInput = document.getElementById('captchaInput');
+        const btnTogglePeek = document.getElementById('btnTogglePeek');
+        const peekIcon = document.getElementById('peekIcon');
+
+        let isPeeking = false;
+
+        emailInput.addEventListener('focus', () => {
+            yeti.classList.remove('cover-eyes', 'peeking', 'curious');
+            yeti.classList.add('look-down');
+        });
+
+        emailInput.addEventListener('input', (e) => {
+            const len = e.target.value.length;
+            const eyeX = Math.min(Math.max((len - 15) * 0.35, -4), 4);
+            pupilLeft.style.transform = `translate(${eyeX}px, 5px)`;
+            pupilRight.style.transform = `translate(${eyeX}px, 5px)`;
+        });
+
+        emailInput.addEventListener('blur', () => {
+            yeti.classList.remove('look-down');
+            pupilLeft.style.transform = 'translate(0px, 0px)';
+            pupilRight.style.transform = 'translate(0px, 0px)';
+        });
+
+        passwordInput.addEventListener('focus', () => {
+            if (!isPeeking) {
+                yeti.classList.remove('look-down', 'curious');
+                yeti.classList.add('cover-eyes');
+            }
+        });
+
+        passwordInput.addEventListener('blur', () => {
+            if (!isPeeking) {
+                yeti.classList.remove('cover-eyes');
+            }
+        });
+
+        btnTogglePeek.addEventListener('click', () => {
+            isPeeking = !isPeeking;
+            if (isPeeking) {
+                passwordInput.type = 'text';
+                peekIcon.className = 'bi bi-eye-slash';
+                yeti.classList.add('cover-eyes', 'peeking');
+            } else {
+                passwordInput.type = 'password';
+                peekIcon.className = 'bi bi-eye';
+                yeti.classList.remove('peeking');
+                if (document.activeElement !== passwordInput) {
+                    yeti.classList.remove('cover-eyes');
+                }
+            }
+        });
+
+        captchaInput.addEventListener('focus', () => {
+            yeti.classList.remove('cover-eyes', 'look-down');
+            yeti.classList.add('curious');
+        });
+
+        captchaInput.addEventListener('blur', () => {
+            yeti.classList.remove('curious');
+        });
+
+        function fillRole(email, password) {
+            emailInput.value = email;
+            passwordInput.value = password;
+            setYetiEmotion('neutral');
+            yeti.classList.remove('cover-eyes', 'look-down', 'curious');
+            pupilLeft.style.transform = 'translate(0px, 0px)';
+            pupilRight.style.transform = 'translate(0px, 0px)';
+        }
+
+        // Special Platform SSO Handlers
+        const ssoModalEl = document.getElementById('ssoModal');
+        let ssoModalInstance = null;
+
+        const ssoProviders = {
+            'google': { title: 'Sign in with Google Workspace', icon: '<i class="bi bi-google text-danger"></i>', btnText: 'Continue with Google Workspace' },
+            'kiet': { title: 'Sign in with KIET ERP Portal', icon: '<i class="bi bi-mortarboard-fill text-primary"></i>', btnText: 'Continue with KIET Portal' },
+            'microsoft': { title: 'Sign in with Microsoft 365', icon: '<i class="bi bi-microsoft text-info"></i>', btnText: 'Continue with Microsoft 365' },
+            'github': { title: 'Sign in with GitHub Student', icon: '<i class="bi bi-github text-dark"></i>', btnText: 'Continue with GitHub Developer' }
+        };
+
+        function openSsoModal(provider) {
+            const info = ssoProviders[provider] || ssoProviders['google'];
+            document.getElementById('ssoModalTitle').innerText = info.title;
+            document.getElementById('ssoProviderIcon').innerHTML = info.icon;
+            document.getElementById('ssoProviderInput').value = provider;
+            document.getElementById('btnSsoSubmit').innerHTML = `<i class="bi bi-box-arrow-in-right me-1"></i> ${info.btnText}`;
+            document.getElementById('ssoFeedback').innerHTML = '';
+            document.getElementById('ssoEmailInput').value = '2628mca0206@kiet.edu';
+
+            if (!ssoModalInstance) {
+                ssoModalInstance = new bootstrap.Modal(ssoModalEl);
+            }
+            ssoModalInstance.show();
+        }
+
+        async function submitSsoLogin(e) {
+            e.preventDefault();
+            const provider = document.getElementById('ssoProviderInput').value;
+            const email = document.getElementById('ssoEmailInput').value.trim().toLowerCase();
+            const feedbackEl = document.getElementById('ssoFeedback');
+            const submitBtn = document.getElementById('btnSsoSubmit');
+
+            // Strict Domain check: Must end with @kiet.edu
+            if (!email.endsWith('@kiet.edu') && !email.endsWith('@kite.edu')) {
+                setYetiEmotion('crying');
+                feedbackEl.innerHTML = `
+                    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 small animate-shake border-0" role="alert">
+                        <span style="font-size: 1.5rem;">😭</span>
+                        <div><strong>Access Denied:</strong> Only institutional <strong>@kiet.edu</strong> accounts are permitted to sign in!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authenticating...';
+
+            try {
+                const res = await fetch("{{ url_for('auth.sso_login') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ provider: provider, email: email })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    setYetiEmotion('happy');
+                    feedbackEl.innerHTML = `
+                        <div class="alert alert-success d-flex align-items-center gap-2 py-2 small animate-bounce border-0" role="alert">
+                            <span style="font-size: 1.5rem;">😊</span>
+                            <div>${data.message || 'Authenticated successfully! Redirecting to OTP...'}</div>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 800);
+                } else {
+                    setYetiEmotion('crying');
+                    feedbackEl.innerHTML = `
+                        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 small animate-shake border-0" role="alert">
+                            <span style="font-size: 1.5rem;">😭</span>
+                            <div>${data.message || 'Authentication failed. Please verify email.'}</div>
+                        </div>
+                    `;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Continue with Special Platform';
+                }
+            } catch (err) {
+                window.location.href = `{{ url_for('auth.sso_login') }}?provider=${encodeURIComponent(provider)}&email=${encodeURIComponent(email)}`;
+            }
+        }
+
+        // Mascot Emotion Handlers & Login Reactions
+        const loginForm = document.getElementById('loginForm');
+        const loginFeedback = document.getElementById('loginFeedback');
+        const flashMessagesContainer = document.getElementById('flashMessagesContainer');
+        const yetiMouth = document.getElementById('yetiMouth');
+        const yetiTears = document.getElementById('yetiTears');
+        const yetiBlush = document.getElementById('yetiBlush');
+        const captchaLabel = document.querySelector('.captcha-pill');
+
+        function setYetiEmotion(emotion) {
+            if (emotion === 'happy') {
+                yeti.classList.remove('cover-eyes', 'peeking', 'look-down');
+                if (yetiMouth) yetiMouth.setAttribute('d', 'M 90 98 Q 100 114 110 98');
+                if (yetiTears) yetiTears.style.display = 'none';
+                if (yetiBlush) yetiBlush.style.display = 'block';
+                pupilLeft.style.transform = 'translate(0px, -2px)';
+                pupilRight.style.transform = 'translate(0px, -2px)';
+            } else if (emotion === 'crying') {
+                yeti.classList.remove('cover-eyes', 'peeking', 'look-down');
+                if (yetiMouth) yetiMouth.setAttribute('d', 'M 92 107 Q 100 96 108 107');
+                if (yetiTears) yetiTears.style.display = 'block';
+                if (yetiBlush) yetiBlush.style.display = 'none';
+                pupilLeft.style.transform = 'translate(0px, 3px)';
+                pupilRight.style.transform = 'translate(0px, 3px)';
+            } else {
+                if (yetiMouth) yetiMouth.setAttribute('d', 'M 92 100 Q 100 108 108 100');
+                if (yetiTears) yetiTears.style.display = 'none';
+                if (yetiBlush) yetiBlush.style.display = 'none';
+            }
+        }
+
+        // Initialize state based on any server flash messages rendered
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, msg in messages %}
+                {% if category == 'danger' %}
+                    setYetiEmotion('crying');
+                {% elif category == 'success' %}
+                    setYetiEmotion('happy');
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+
+        // Form Submission with Instant Happy/Crying Emoji Reactions
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (flashMessagesContainer) flashMessagesContainer.style.display = 'none';
+
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validating...';
+
+            const formData = new FormData(loginForm);
+            try {
+                const res = await fetch("{{ url_for('auth.login') }}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Correct Credentials -> Happy Emoji 😊
+                    setYetiEmotion('happy');
+                    loginFeedback.innerHTML = `
+                        <div class="alert alert-success d-flex align-items-center gap-3 p-3 auth-status-banner border-0 animate-bounce mb-3" role="alert">
+                            <span style="font-size: 2.3rem; line-height: 1;">😊</span>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-success" style="font-size: 1.05rem;">Login Successful! 😊</div>
+                                <div class="small text-muted">${data.message || 'Credentials verified. Redirecting to OTP...'}</div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 800);
+                } else {
+                    // Incorrect Credentials -> Crying Emoji 😭
+                    setYetiEmotion('crying');
+                    loginFeedback.innerHTML = `
+                        <div class="alert alert-danger d-flex align-items-center gap-3 p-3 auth-status-banner border-0 animate-shake mb-3" role="alert">
+                            <span style="font-size: 2.3rem; line-height: 1;">😭</span>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-danger" style="font-size: 1.05rem;">Login Failed! 😭</div>
+                                <div class="small">${data.message || 'Invalid details. Please verify and try again.'}</div>
+                            </div>
+                            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                        </div>
+                    `;
+                    if (data.new_captcha && captchaLabel) {
+                        captchaLabel.textContent = data.new_captcha;
+                    }
+                    passwordInput.value = '';
+                    captchaInput.value = '';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            } catch (err) {
+                // In case of any network error, fallback cleanly to standard POST submit
+                loginForm.submit();
+            }
+        });
+    </script>
+</body>
+</html>

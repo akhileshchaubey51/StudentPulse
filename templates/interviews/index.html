@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Preparation{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Interview Preparation & AI Mock Simulator</h3>
+        <p class="text-muted small mb-0">Master high-frequency Technical and HR interview questions with automated evaluation and feedback.</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="pulse-card mb-4">
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('interviews.index', type='all') }}" class="btn btn-sm {% if q_type == 'all' %}btn-pulse-primary{% else %}btn-outline-secondary{% endif %}">All Questions</a>
+        <a href="{{ url_for('interviews.index', type='Technical') }}" class="btn btn-sm {% if q_type == 'Technical' %}btn-pulse-primary{% else %}btn-outline-secondary{% endif %}">Technical Questions</a>
+        <a href="{{ url_for('interviews.index', type='HR') }}" class="btn btn-sm {% if q_type == 'HR' %}btn-pulse-primary{% else %}btn-outline-secondary{% endif %}">HR & Behavioral</a>
+    </div>
+</div>
+
+<!-- Questions Grid -->
+<div class="row g-3 mb-4">
+    {% for q in questions %}
+        <div class="col-md-6">
+            <div class="pulse-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge {% if q.question_type == 'Technical' %}badge-soft-blue{% else %}badge-soft-yellow{% endif %}">{{ q.question_type }}</span>
+                        <span class="badge bg-light text-dark border">{{ q.skill_topic }}</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2">{{ q.question_text }}</h6>
+                    {% if q.key_points %}
+                        <p class="small text-muted mb-3"><i class="bi bi-lightbulb text-warning me-1"></i> <strong>Key Points:</strong> {{ q.key_points }}</p>
+                    {% endif %}
+                </div>
+                <div class="border-top pt-2 mt-2 d-flex justify-content-end">
+                    <a href="{{ url_for('interviews.practice', question_id=q.id) }}" class="btn btn-pulse-primary btn-sm">
+                        <i class="bi bi-mic me-1"></i> Practice Mock Answer
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Past Mock Interview Sessions -->
+{% if past_mocks %}
+    <div class="pulse-card">
+        <div class="pulse-card-header">
+            <h5 class="pulse-card-title"><i class="bi bi-clock-history text-secondary"></i> Recent Mock Interview Submissions</h5>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for m in past_mocks %}
+                <div class="list-group-item px-0 py-2 border-0 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold small">{{ m.target_role }} ({{ m.interview_type }})</div>
+                        <div class="text-muted" style="font-size:0.75rem;">{{ m.created_at.strftime('%b %d, %Y') }} &bull; {{ m.overall_feedback }}</div>
+                    </div>
+                    <span class="badge badge-soft-green fs-6">{{ m.score }}/100</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

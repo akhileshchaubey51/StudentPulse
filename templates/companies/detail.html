@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.name }} - Placement Requirements{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('companies.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Companies</a>
+</div>
+
+<div class="pulse-card mb-4">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h3 class="fw-bold mb-0">{{ company.name }}</h3>
+                <span class="badge badge-soft-green"><i class="bi bi-patch-check-fill me-1"></i> Official Verified Track</span>
+            </div>
+            <p class="text-muted mb-2">{{ company.description }}</p>
+            <div class="small text-muted">
+                <i class="bi bi-link-45deg"></i> Careers Portal: <a href="{{ company.careers_url or '#' }}" target="_blank" class="text-success text-decoration-none">{{ company.careers_url }}</a> &bull; Verified on: {{ company.last_verified_date }}
+            </div>
+        </div>
+        <a href="{{ url_for('skill_gap.index', company_id=company.id) }}" class="btn btn-pulse-primary">
+            <i class="bi bi-pie-chart-fill me-1"></i> Analyze My Skill Gap
+        </a>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-3">Campus Job Roles & Requirements</h4>
+
+<div class="row g-4">
+    {% for role in company.job_roles %}
+        <div class="col-lg-6">
+            <div class="pulse-card h-100">
+                <div class="pulse-card-header">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-success">{{ role.title }}</h5>
+                        <span class="badge badge-soft-blue">Compensation: {{ role.ctc_range }}</span>
+                    </div>
+                    <span class="small text-muted">Min CGPA: <strong>{{ role.min_cgpa }}</strong></span>
+                </div>
+
+                <p class="small text-muted mb-3">{{ role.description }}</p>
+
+                <div class="mb-3">
+                    <h6 class="fw-bold small text-dark mb-2">Required Skills & Benchmark Proficiency:</h6>
+                    <div class="d-flex flex-column gap-2">
+                        {% for req in role.required_skills %}
+                            <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border">
+                                <span class="fw-semibold small">{{ req.skill.name }}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge badge-soft-green">{{ req.minimum_proficiency }}</span>
+                                    <span class="text-muted small">Weight: {{ req.weight }}/10</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold small text-dark mb-1">Selection Rounds:</h6>
+                    <p class="small text-muted mb-0">{{ role.selection_process }}</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

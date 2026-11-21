@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Learning Analytics & Performance</h3>
+        <p class="text-muted small mb-0">Quantitative learning trends, weekly time investment, and assessment consistency benchmarks.</p>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-success">{{ current_streak }}</div>
+                <div class="stat-label">Current Streak Days</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-green"><i class="bi bi-fire"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-warning">{{ longest_streak }}</div>
+                <div class="stat-label">Longest Streak Record</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-yellow"><i class="bi bi-trophy"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-primary">{{ total_active_days }}</div>
+                <div class="stat-label">Total Active Days</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-blue"><i class="bi bi-calendar-check"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-secondary">{{ total_hours }}</div>
+                <div class="stat-label">Total Learning Hours</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-green"><i class="bi bi-hourglass-split"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Weekly Hours Trend -->
+    <div class="col-lg-8">
+        <div class="pulse-card h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill text-success me-1"></i> Weekly Study Investment (Hours / Day)</h5>
+            <div style="height: 280px;">
+                <canvas id="hoursTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Doughnut -->
+    <div class="col-lg-4">
+        <div class="pulse-card h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart-fill text-primary me-1"></i> Activity Distribution</h5>
+            <div style="height: 280px; position:relative;">
+                <canvas id="categoryDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assessment Score Trends -->
+{% if attempt_scores %}
+    <div class="pulse-card">
+        <h5 class="fw-bold mb-3"><i class="bi bi-graph-up text-warning me-1"></i> Assessment Score Progression (%)</h5>
+        <div style="height: 250px;">
+            <canvas id="assessmentProgressChart"></canvas>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Hours Bar Chart
+    const hoursCtx = document.getElementById('hoursTrendChart').getContext('2d');
+    new Chart(hoursCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ days_labels|tojson }},
+            datasets: [{
+                label: 'Learning Hours',
+                data: {{ days_hours|tojson }},
+                backgroundColor: '#2DBE65',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#F1F3F4' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Activity Doughnut
+    const catCtx = document.getElementById('categoryDistChart').getContext('2d');
+    new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels|tojson }},
+            datasets: [{
+                data: {{ cat_data|tojson }},
+                backgroundColor: ['#2DBE65', '#1A73E8', '#F5B91B', '#E94343', '#8E24AA']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // 3. Assessment Trend
+    {% if attempt_scores %}
+    const assessCtx = document.getElementById('assessmentProgressChart').getContext('2d');
+    new Chart(assessCtx, {
+        type: 'line',
+        data: {
+            labels: {{ attempt_labels|tojson }},
+            datasets: [{
+                label: 'Score %',
+                data: {{ attempt_scores|tojson }},
+                borderColor: '#1A73E8',
+                backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { min: 0, max: 100, grid: { color: '#F1F3F4' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

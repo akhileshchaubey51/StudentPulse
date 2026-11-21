@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="pulse-card text-center">
+            <div class="rounded-circle bg-light border text-center fw-bold mx-auto mb-3" style="width:72px; height:72px; line-height:70px; font-size:2rem; color:var(--brand-green);">
+                {{ current_user.first_name[0] }}
+            </div>
+            <h5 class="fw-bold mb-1">{{ current_user.full_name }}</h5>
+            <span class="badge bg-soft-green mb-2 text-capitalize">{{ current_user.role }}</span>
+            <p class="text-muted small mb-3">{{ current_user.email }}</p>
+
+            {% if current_user.is_student() and current_user.student_profile %}
+                <div class="border-top pt-3 text-start small">
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="text-muted">Enrollment:</span>
+                        <span class="fw-semibold">{{ current_user.student_profile.enrollment_number }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="text-muted">Department:</span>
+                        <span class="fw-semibold">{{ current_user.student_profile.department }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="text-muted">Graduation:</span>
+                        <span class="fw-semibold">{{ current_user.student_profile.graduation_year }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="text-muted">CGPA:</span>
+                        <span class="fw-semibold">{{ current_user.student_profile.cgpa }}</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="pulse-card">
+            <div class="pulse-card-header">
+                <h5 class="pulse-card-title"><i class="bi bi-pencil-square"></i> Edit Profile Information</h5>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.profile') }}">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ current_user.first_name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ current_user.last_name }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Phone Number</label>
+                    <input type="text" name="phone" class="form-control" value="{{ current_user.phone or '' }}" placeholder="+1 (555) 000-0000">
+                </div>
+
+                {% if current_user.is_student() and current_user.student_profile %}
+                    {% set prof = current_user.student_profile %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Academic Program / Degree</label>
+                            <select name="course" class="form-select">
+                                <option value="B.Tech" {% if prof.course == 'B.Tech' %}selected{% endif %}>B.Tech (Engineering)</option>
+                                <option value="BCA" {% if prof.course == 'BCA' %}selected{% endif %}>BCA (Computer Applications)</option>
+                                <option value="MCA" {% if prof.course == 'MCA' %}selected{% endif %}>MCA (Master of Computer Apps)</option>
+                                <option value="B.Pharma" {% if prof.course == 'B.Pharma' %}selected{% endif %}>B.Pharma (Pharmacy)</option>
+                                <option value="BBA" {% if prof.course == 'BBA' %}selected{% endif %}>BBA (Business Administration)</option>
+                                <option value="MBA" {% if prof.course == 'MBA' %}selected{% endif %}>MBA (Management)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Department</label>
+                            <input type="text" name="department" class="form-control" value="{{ prof.department }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Career Objective</label>
+                        <textarea name="career_objective" class="form-control" rows="2">{{ prof.career_objective }}</textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Target Companies (Select MNCs, Startups or enter Custom)</label>
+                            <input type="text" name="target_companies" class="form-control" value="{{ prof.target_companies }}" placeholder="e.g. Google, TCS, Sun Pharma, Deloitte, or Other Custom Company">
+                            <div class="small text-muted mt-1">Comma-separated. You can add any company from catalog or write any custom unlisted company.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Preferred Job Roles</label>
+                            <input type="text" name="preferred_roles" class="form-control" value="{{ prof.preferred_roles }}">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">GitHub Profile URL</label>
+                            <input type="url" name="github_url" class="form-control" value="{{ prof.github_url or '' }}" placeholder="https://github.com/username">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">LinkedIn Profile URL</label>
+                            <input type="url" name="linkedin_url" class="form-control" value="{{ prof.linkedin_url or '' }}" placeholder="https://linkedin.com/in/username">
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="border-top pt-3 mt-4">
+                    <h6 class="fw-bold mb-2">Change Password</h6>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">New Password (leave empty to keep unchanged)</label>
+                        <input type="password" name="new_password" class="form-control" placeholder="New password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-pulse-primary">Save Profile Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Project Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Academic & Personal Projects</h3>
+        <p class="text-muted small mb-0">Build your engineering portfolio, track milestones, and submit capstone projects for faculty mentorship evaluation.</p>
+    </div>
+    <button class="btn btn-pulse-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+        <i class="bi bi-folder-plus me-1"></i> New Project
+    </button>
+</div>
+
+<div class="row g-4">
+    {% for proj in projects %}
+        <div class="col-lg-6">
+            <div class="pulse-card h-100">
+                <div class="pulse-card-header">
+                    <div>
+                        <h5 class="fw-bold mb-1">{{ proj.title }}</h5>
+                        <span class="badge badge-soft-blue">{{ proj.category }}</span>
+                    </div>
+                    <span class="badge {% if proj.status == 'Completed' %}badge-soft-green{% elif proj.status == 'Under Review' %}badge-soft-yellow{% else %}badge-soft-blue{% endif %}">
+                        {{ proj.status }}
+                    </span>
+                </div>
+
+                <p class="small text-muted mb-3">{{ proj.description }}</p>
+
+                <div class="mb-3">
+                    <span class="small fw-semibold text-dark">Tech Stack:</span>
+                    <span class="small text-muted">{{ proj.tech_stack }}</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if proj.github_url %}
+                        <a href="{{ proj.github_url }}" target="_blank" class="small text-decoration-none text-dark">
+                            <i class="bi bi-github me-1"></i> Repository
+                        </a>
+                    {% endif %}
+                    {% if proj.live_url %}
+                        <a href="{{ proj.live_url }}" target="_blank" class="small text-decoration-none text-success">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Live Demo
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-semibold">Progress</span>
+                        <span class="small fw-bold text-success">{{ proj.progress_percentage }}%</span>
+                    </div>
+                    <div class="progress-pulse">
+                        <div class="progress-pulse-bar" style="width: {{ proj.progress_percentage }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Milestones -->
+                <div class="border-top pt-3 mb-3">
+                    <h6 class="fw-bold small mb-2">Milestones:</h6>
+                    <div class="list-group list-group-flush">
+                        {% for m in proj.milestones %}
+                            <div class="list-group-item px-0 py-1 border-0 d-flex align-items-center justify-content-between">
+                                <form method="POST" action="{{ url_for('projects.update_milestone', milestone_id=m.id) }}" class="d-flex align-items-center gap-2">
+                                    <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none">
+                                        {% if m.is_completed %}
+                                            <i class="bi bi-check-square-fill text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-square text-secondary"></i>
+                                        {% endif %}
+                                    </button>
+                                    <span class="small {% if m.is_completed %}text-muted text-decoration-line-through{% endif %}">{{ m.title }}</span>
+                                </form>
+                                {% if m.completed_at %}
+                                    <span class="text-muted" style="font-size:0.7rem;">Done</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Faculty Reviews -->
+                {% if proj.reviews.count() > 0 %}
+                    <div class="border-top pt-3 bg-light p-2 rounded">
+                        <span class="small fw-bold text-dark d-block mb-1"><i class="bi bi-chat-left-quote text-success me-1"></i> Faculty Review:</span>
+                        {% for rev in proj.reviews %}
+                            <p class="small text-secondary mb-1">"{{ rev.feedback }}"</p>
+                            <span class="badge badge-soft-green">Grade: {{ rev.grade }} &bull; Rating: {{ rev.rating }}/5</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="border-top pt-3 mt-3 d-flex justify-content-end">
+                    {% if not proj.submitted_for_review and proj.status != 'Completed' %}
+                        <form method="POST" action="{{ url_for('projects.submit_review', project_id=proj.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-send-check me-1"></i> Submit for Faculty Review
+                            </button>
+                        </form>
+                    {% elif proj.submitted_for_review %}
+                        <span class="small text-warning"><i class="bi bi-hourglass-split me-1"></i> Pending Faculty Mentorship Review</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="pulse-card py-5">
+                <i class="bi bi-folder-x fs-1 text-muted"></i>
+                <h5 class="fw-bold mt-2">No Projects Added Yet</h5>
+                <p class="text-muted small">Showcase your capstone and personal coding projects to build an impressive resume.</p>
+                <button class="btn btn-pulse-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProjectModal">Create First Project</button>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: Add Project -->
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('projects.add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">New Project Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Project Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Distributed Task Queue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Describe the problem solved, architecture, and impact" required></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="Academic Capstone">Academic Capstone</option>
+                                <option value="Personal Project">Personal Project</option>
+                                <option value="Open Source">Open Source Contribution</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Initial Progress %</label>
+                            <input type="number" name="progress_percentage" class="form-control" value="25" min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Tech Stack</label>
+                        <input type="text" name="tech_stack" class="form-control" placeholder="e.g. Python, Flask, Redis, PostgreSQL">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">GitHub URL</label>
+                            <input type="url" name="github_url" class="form-control" placeholder="https://github.com/...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Live Deployment URL</label>
+                            <input type="url" name="live_url" class="form-control" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-pulse-primary">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

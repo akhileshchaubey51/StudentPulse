@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Taking: {{ assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('coding.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-circle me-1"></i> Exit Assessment</a>
+</div>
+
+<div class="pulse-card">
+    <div class="pulse-card-header">
+        <div>
+            <h4 class="fw-bold mb-1">{{ assessment.title }}</h4>
+            <span class="small text-muted">{{ assessment.category }} &bull; {{ assessment.duration_minutes }} Mins &bull; Total Questions: {{ questions|length }}</span>
+        </div>
+        <span class="badge badge-soft-yellow"><i class="bi bi-stopwatch me-1"></i> Timed Test</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('coding.submit', assessment_id=assessment.id) }}">
+        <div class="d-flex flex-column gap-4 my-3">
+            {% for q in questions %}
+                <div class="p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark">Question {{ loop.index }}</span>
+                        <span class="badge badge-soft-blue">{{ q.sub_topic }} &bull; {{ q.difficulty }}</span>
+                    </div>
+                    <p class="fw-semibold text-secondary mb-3">{{ q.question_text }}</p>
+
+                    <div class="d-flex flex-column gap-2">
+                        {% for opt in q.get_options() %}
+                            <div class="form-check p-2 bg-white rounded border ps-4">
+                                <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="opt_{{ q.id }}_{{ loop.index0 }}" value="{{ loop.index0 }}">
+                                <label class="form-check-label w-100" for="opt_{{ q.id }}_{{ loop.index0 }}">
+                                    {{ opt }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="border-top pt-3 d-flex justify-content-end">
+            <button type="submit" class="btn btn-pulse-primary py-2 px-4 fw-bold">Submit Assessment</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Resume Builder</h3>
+        <p class="text-muted small mb-0">Auto-compiled from verified academic credentials, technical skills, projects, and achievements.</p>
+    </div>
+    <a href="{{ url_for('resume.preview') }}" target="_blank" class="btn btn-pulse-primary">
+        <i class="bi bi-printer me-1"></i> Preview & Print PDF
+    </a>
+</div>
+
+<!-- Completeness Banner -->
+<div class="pulse-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="small fw-bold">Resume Profile Completeness</span>
+        <span class="small fw-bold text-success">{{ completeness }}%</span>
+    </div>
+    <div class="progress-pulse">
+        <div class="progress-pulse-bar bg-success" style="width: {{ completeness }}%;"></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Verified Profile Data (Auto-synced) -->
+    <div class="col-lg-5">
+        <div class="pulse-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-shield-check text-success me-1"></i> Verified Synced Data</h5>
+            <div class="mb-3">
+                <span class="fw-semibold small d-block">Education:</span>
+                <p class="small text-muted mb-0">{{ profile.course }} in {{ profile.branch }} &bull; CGPA: {{ profile.cgpa }} &bull; {{ profile.college }} ({{ profile.graduation_year }})</p>
+            </div>
+            <div class="mb-3">
+                <span class="fw-semibold small d-block">Technical Skills ({{ skills|length }}):</span>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% for s in skills %}
+                        <span class="badge bg-light text-dark border">{{ s.skill.name }} ({{ s.proficiency }})</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <span class="fw-semibold small d-block">Portfolio Projects ({{ projects|length }}):</span>
+                {% for p in projects %}
+                    <div class="small text-muted mt-1">&bull; <strong>{{ p.title }}</strong>: {{ p.tech_stack }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Editable Resume Content -->
+    <div class="col-lg-7">
+        <div class="pulse-card">
+            <div class="pulse-card-header">
+                <h5 class="pulse-card-title"><i class="bi bi-pencil text-primary me-1"></i> Customize Resume Sections</h5>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Professional Summary / Career Objective</label>
+                    <textarea name="summary" class="form-control" rows="3">{{ resume.summary }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Certifications (one per line)</label>
+                    <textarea name="certifications" class="form-control" rows="3">{% for c in resume.get_certifications() %}{{ c }}
+{% endfor %}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Honors & Achievements (one per line)</label>
+                    <textarea name="achievements" class="form-control" rows="3">{% for a in resume.get_achievements() %}{{ a }}
+{% endfor %}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-pulse-primary">Save Resume Customizations</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}25+ Practice Questions Bank - Student Pulse{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-patch-question text-success motion-float me-2"></i>25+ Interactive Practice Questions Bank
+        </h2>
+        <p class="text-muted mb-0">
+            Self-paced practice questions across <strong>Python, Java/OOP, DSA, SQL, Quantitative Math, Logical Reasoning, Pharmacy & Business</strong>.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('coding.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i> Timed Assessments
+        </a>
+        <a href="{{ url_for('games.index') if 'games' in config.get('BLUEPRINTS', {}) or True else '#' }}" class="btn btn-pulse-primary">
+            <i class="bi bi-controller motion-pulse-fire me-1"></i> Mind-Fresh Games Zone
+        </a>
+    </div>
+</div>
+
+<!-- AI Dynamic Question Synthesizer Banner -->
+<div class="pulse-card mb-4" style="background: linear-gradient(135deg, rgba(0, 192, 255, 0.08) 0%, rgba(0, 210, 180, 0.08) 100%); border: 1.5px dashed #00C0FF;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary text-white"><i class="bi bi-stars me-1"></i>AI Powered</span>
+                <h5 class="fw-bold mb-0 text-dark">Never-Repeating Dynamic AI Questions Engine</h5>
+            </div>
+            <p class="text-muted small mb-0">
+                Generate fresh, newly calculated questions on-the-fly. Powered by Gemini & algorithmic procedural synthesis so you never see the same numbers or scenarios twice!
+            </p>
+        </div>
+        <form method="POST" action="{{ url_for('coding.generate_ai_questions') }}" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="category" value="{{ category }}">
+            <input type="hidden" name="difficulty" value="{{ difficulty }}">
+            <button type="submit" class="btn btn-pulse-primary fw-bold text-nowrap shadow-sm">
+                <i class="bi bi-magic me-1"></i> ✨ Generate 5 Fresh AI Questions
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Category & Difficulty Filters -->
+<div class="pulse-card mb-4">
+    <form method="GET" action="{{ url_for('coding.practice') }}" class="row g-3 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="Search question or sub-topic (e.g. BST, Joins, Train)..." value="{{ search }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if category == 'all' %}selected{% endif %}>All Disciplines & Domains</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="difficulty" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if difficulty == 'all' %}selected{% endif %}>All Difficulties</option>
+                <option value="Easy" {% if difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+                <option value="Medium" {% if difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="Hard" {% if difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-pulse-primary w-100">Filter</button>
+        </div>
+    </form>
+</div>
+
+<!-- Questions Count & Active Category Badge -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="fw-bold text-dark">
+        Showing <span class="text-success">{{ questions|length }}</span> Curated Questions
+    </div>
+    <div>
+        <button class="btn btn-sm btn-outline-success" onclick="toggleAllSolutions()">
+            <i class="bi bi-eye me-1"></i> Toggle All Solutions
+        </button>
+    </div>
+</div>
+
+<!-- Questions List -->
+<div class="row g-4 mb-4">
+    {% for q in questions %}
+        <div class="col-12">
+            <div class="pulse-card mb-0">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold">#{{ loop.index }}</span>
+                        <span class="badge bg-light text-dark border">{{ q.category }} &bull; {{ q.sub_topic }}</span>
+                        <span class="badge {% if q.difficulty == 'Easy' %}badge-soft-green{% elif q.difficulty == 'Medium' %}badge-soft-yellow{% else %}badge-soft-red{% endif %}">
+                            {{ q.difficulty }}
+                        </span>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold text-dark mb-3" style="line-height:1.5;">
+                    {{ q.question_text }}
+                </h5>
+
+                <!-- Options Grid -->
+                <div class="row g-2 mb-3">
+                    {% for opt in q.get_options() %}
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded-3 bg-light option-box option-{{ q.id }}-{{ loop.index0 }}" style="font-size:1.02rem;">
+                                <span class="badge bg-white text-dark border me-2">{{ ['A', 'B', 'C', 'D'][loop.index0] }}</span>
+                                {{ opt }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Reveal Explanation Action -->
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#solution-{{ q.id }}">
+                        <i class="bi bi-lightbulb-fill text-warning me-1"></i> Reveal Correct Answer & Explanation
+                    </button>
+                    <span class="small text-muted"><i class="bi bi-mortarboard me-1"></i>Campus Recruitment Standard</span>
+                </div>
+
+                <div class="collapse mt-3" id="solution-{{ q.id }}">
+                    <div class="p-3 bg-success-subtle border border-success-subtle rounded-3">
+                        <div class="fw-bold text-success mb-1">
+                            <i class="bi bi-check-circle-fill me-1"></i> Correct Answer: Option {{ ['A', 'B', 'C', 'D'][q.correct_option] }} ({{ q.get_options()[q.correct_option] }})
+                        </div>
+                        <div class="text-secondary small mt-1" style="font-size:0.98rem; line-height:1.6;">
+                            <strong>Detailed Insight:</strong> {{ q.explanation }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    let allOpen = false;
+    function toggleAllSolutions() {
+        allOpen = !allOpen;
+        const collapses = document.querySelectorAll('.collapse');
+        collapses.forEach(c => {
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(c);
+            if (allOpen) {
+                bsCollapse.show();
+            } else {
+                bsCollapse.hide();
+            }
+        });
+    }
+</script>
+{% endblock %}

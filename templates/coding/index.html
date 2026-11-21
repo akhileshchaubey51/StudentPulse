@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Coding & Aptitude Preparation{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Coding & Aptitude Assessments</h3>
+        <p class="text-muted small mb-0">Prepare for company online assessment rounds with timed technical and aptitude tests.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('coding.practice') }}" class="btn btn-pulse-primary">
+            <i class="bi bi-patch-question-fill me-1 motion-float"></i> Practice 25+ Questions Bank
+        </a>
+    </div>
+</div>
+
+<!-- Performance Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-primary">{{ total_attempts }}</div>
+                <div class="stat-label">Assessments Attempted</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-blue"><i class="bi bi-journal-code motion-float"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-success">{{ accuracy }}%</div>
+                <div class="stat-label">Pass Accuracy Rate</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-green motion-radar-pulse"><i class="bi bi-bullseye motion-pulse-fire"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div>
+                <div class="stat-value text-warning">{{ total_bank_questions }}</div>
+                <div class="stat-label">Practice Questions in Bank</div>
+            </div>
+            <div class="stat-icon-wrap stat-icon-yellow"><i class="bi bi-patch-question motion-sparkle"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Assessments -->
+<div class="pulse-card mb-4">
+    <div class="pulse-card-header">
+        <h5 class="pulse-card-title"><i class="bi bi-lightning-charge text-warning"></i> Available Placement Assessments</h5>
+    </div>
+    <div class="row g-3">
+        {% for a in assessments %}
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold mb-0">{{ a.title }}</h5>
+                            <span class="badge badge-soft-blue">{{ a.category }}</span>
+                        </div>
+                        <div class="small text-muted mb-3">
+                            <span><i class="bi bi-clock me-1"></i>{{ a.duration_minutes }} Minutes</span> &bull;
+                            <span><i class="bi bi-question-circle me-1"></i>{{ a.questions|length }} Questions</span> &bull;
+                            <span>Pass Mark: {{ a.passing_score }}%</span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('coding.take', assessment_id=a.id) }}" class="btn btn-pulse-primary btn-sm">
+                            <i class="bi bi-play-circle me-1"></i> Start Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Past Attempts History -->
+<div class="pulse-card">
+    <div class="pulse-card-header">
+        <h5 class="pulse-card-title"><i class="bi bi-clock-history text-secondary"></i> Past Assessment Attempts</h5>
+    </div>
+    {% if past_attempts %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Assessment</th>
+                        <th>Category</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Attempt Date</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for att in past_attempts %}
+                        <tr>
+                            <td class="fw-bold small">{{ att.assessment.title }}</td>
+                            <td><span class="badge badge-soft-blue">{{ att.assessment.category }}</span></td>
+                            <td class="fw-bold {% if att.passed %}text-success{% else %}text-danger{% endif %}">{{ att.score }}%</td>
+                            <td>
+                                {% if att.passed %}
+                                    <span class="badge badge-soft-green">Passed</span>
+                                {% else %}
+                                    <span class="badge badge-soft-red">Needs Practice</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ att.completed_at.strftime('%b %d, %Y %H:%M') }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('coding.result', attempt_id=att.id) }}" class="btn btn-sm btn-outline-secondary">Review</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted small mb-0">No past attempts yet. Take an assessment above to benchmark your skills!</p>
+    {% endif %}
+</div>
+{% endblock %}
