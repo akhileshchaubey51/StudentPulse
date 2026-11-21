@@ -1,5 +1,16 @@
-# Student Pulse
-## AI-Powered Student Career Development, Skill Tracking, Placement Preparation, Learning Analytics & Faculty Mentorship Platform
+# Student Pulse 🎓
+## AI-Powered Student Career Development, Skill Tracking, Placement Preparation & KIET Group of Institutions Portal
+
+[![Live App on Render](https://img.shields.io/badge/Render-Live%20Deployment-00C0FF?style=for-the-badge&logo=render&logoColor=white)](https://student-pulse-esbc.onrender.com)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/akhileshchaubey51/StudentPulse)
+[![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+
+---
+
+### 🌐 Live Production Application
+
+> 🚀 **Live URL:** **[https://student-pulse-esbc.onrender.com](https://student-pulse-esbc.onrender.com)**  
+> Hosted on **Render** (Production WSGI with Gunicorn & automatic database synchronization).
 
 ---
 
@@ -100,13 +111,16 @@ http://127.0.0.1:5000
 
 ---
 
-### Test Credentials (Pre-seeded)
+### Official KIET Portals & Credentials
 
 | Role | Email | Password | Access / Capabilities |
 |---|---|---|---|
-| **Student** | `alex.student@studentpulse.edu` | `Student@123` | Full student dashboard, 14-day streak, heatmap, study plans, projects, quizzes, resume |
-| **Faculty** | `prof.sharma@studentpulse.edu` | `Faculty@123` | Faculty dashboard, assigned cohort monitoring, at-risk flags, mentorship feedback |
-| **Administrator** | `admin@studentpulse.edu` | `Admin@123` | Full administrative control, user provisioning, academic structure, company catalog |
+| **Student** | `2628mca0206@kiet.edu` | `Student@123` | Full MCA student dashboard, 14-day streak, heatmap, study plans, capstone project, 21 interactive games, resume |
+| **Faculty / Staff** | `staff@kiet.edu` | `Staff@123` *(or `Password@123`)* | Faculty dashboard, MCA 2026-2028 cohort monitoring, at-risk flags, mentorship targets & feedback |
+| **Administrator** | `admin@kiet.edu` | `Admin@123` *(or `Password@123`)* | Full administrative control, user provisioning, academic hierarchy, placement drive management |
+
+> 🔑 **Special Platforms Single Sign-On (SSO):**  
+> Students can also sign in via **Google Workspace**, **KIET ERP Portal**, **Microsoft 365**, or **GitHub Student Developer** using their official `@kiet.edu` address with 2-Step OTP authentication.
 
 ---
 
